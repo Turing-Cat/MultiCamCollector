@@ -1,0 +1,8 @@
+pyqt6
+loguru
+pydantic
+ruff
+black
+pytest
+pyinstaller
+opencv-python

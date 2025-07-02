@@ -1,0 +1,14 @@
+# Camera Settings
+camera_resolution: "1280x720"
+camera_fps: 30
+exposure:
+  d435i: 150
+  zed2i: 100
+
+# Storage Settings
+dataset_root_dir: "D:/Dataset"
+directory_format: "{date}/{lighting}/{background_id}"
+
+# Logging
+log_level: "INFO"
+log_file: "multicam_collector.log"
