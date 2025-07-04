@@ -6,3 +6,5 @@ black
 pytest
 pyinstaller
 opencv-python
+pyrealsense2
+pyzed

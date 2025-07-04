@@ -1,7 +1,7 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout
 from gui import PreviewGrid, MetadataPanel, LogPanel
-from services import DeviceManager, CaptureOrchestrator, StorageService
+from services import DeviceManager, CaptureOrchestrator, StorageService, SequenceCounter
 from models import CaptureMetadata
 
 class MainWindow(QMainWindow):
@@ -11,15 +11,22 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 1600, 900)
 
         # Initialize services
+        storage_root = "D:/Dataset"
         self.device_manager = DeviceManager()
         self.device_manager.discover_cameras()
         self.capture_orchestrator = CaptureOrchestrator(self.device_manager)
-        self.storage_service = StorageService(root_dir="D:/Dataset")
+        self.storage_service = StorageService(root_dir=storage_root)
+        self.sequence_counter = SequenceCounter(storage_dir=storage_root)
 
         # Create UI components
-        self.preview_grid = PreviewGrid([camera.camera_id for camera in self.device_manager.get_all_cameras()])
+        self.preview_grid = PreviewGrid(self.device_manager)
         self.metadata_panel = MetadataPanel()
         self.log_panel = LogPanel()
+
+        # Set initial sequence number in UI
+        initial_metadata = self.metadata_panel.get_metadata()
+        initial_metadata.sequence_number = self.sequence_counter.get_current()
+        self.metadata_panel.set_metadata(initial_metadata)
 
         # Layout
         central_widget = QWidget()
@@ -35,6 +42,15 @@ class MainWindow(QMainWindow):
 
         # Connect signals
         self.metadata_panel.capture_button.clicked.connect(self.on_capture)
+        self.metadata_panel.sequence_number_edit.textChanged.connect(self.on_sequence_changed)
+
+        # Start device monitoring
+        self.device_manager.start_monitoring()
+
+    def closeEvent(self, event):
+        """Handle the main window close event."""
+        self.device_manager.stop_monitoring()
+        super().closeEvent(event)
 
     def on_capture(self):
         """Handle the capture button click."""
@@ -48,10 +64,20 @@ class MainWindow(QMainWindow):
             
             # Increment sequence number
             if not self.metadata_panel.lock_checkbox.isChecked():
-                metadata.sequence_number += 1
+                self.sequence_counter.increment()
+                metadata.sequence_number = self.sequence_counter.get_current()
                 self.metadata_panel.set_metadata(metadata)
         else:
             self.log_panel.add_log_message("Capture failed. No frames received.")
+
+    def on_sequence_changed(self, text: str):
+        """Handle manual changes to the sequence number."""
+        try:
+            new_sequence = int(text)
+            self.sequence_counter.set_current(new_sequence)
+        except ValueError:
+            # Ignore non-integer input
+            pass
 
 
 def main():
