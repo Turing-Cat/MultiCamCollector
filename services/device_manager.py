@@ -1,7 +1,5 @@
 import pyrealsense2 as rs
 import pyzed.sl as sl
-import time
-import threading
 from typing import List
 from devices.abstract_camera import AbstractCamera
 from devices.realsense_camera import RealsenseCamera
@@ -13,8 +11,6 @@ class DeviceManager:
 
     def __init__(self):
         self._cameras: List[AbstractCamera] = []
-        self._monitoring_thread = None
-        self._stop_event = threading.Event()
 
     def discover_cameras(self) -> None:
         """Discover and connect to all available cameras."""
@@ -68,37 +64,6 @@ class DeviceManager:
             MockCamera(camera_id="D435i_4", model="D435i"),
             MockCamera(camera_id="ZED2i_1", model="ZED2i")
         ]
-
-    def start_monitoring(self):
-        """Start the camera connection monitoring thread."""
-        if self._monitoring_thread is None:
-            self._stop_event.clear()
-            self._monitoring_thread = threading.Thread(target=self._monitor_cameras, daemon=True)
-            self._monitoring_thread.start()
-            print("Camera monitoring started.")
-
-    def stop_monitoring(self):
-        """Stop the camera connection monitoring thread."""
-        if self._monitoring_thread is not None:
-            self._stop_event.set()
-            self._monitoring_thread.join()
-            self._monitoring_thread = None
-            print("Camera monitoring stopped.")
-
-    def _monitor_cameras(self):
-        """Periodically check camera connections and attempt to reconnect."""
-        while not self._stop_event.is_set():
-            for camera in self._cameras:
-                if not camera.check_connection():
-                    print(f"Camera {camera.camera_id} disconnected. Attempting to reconnect...")
-                    try:
-                        camera.disconnect()  # Ensure clean state
-                        camera.connect()
-                        if camera.is_connected:
-                            print(f"Camera {camera.camera_id} reconnected successfully.")
-                    except Exception as e:
-                        print(f"Failed to reconnect to {camera.camera_id}: {e}")
-            time.sleep(5)  # Check every 5 seconds
 
     def get_all_cameras(self) -> List[AbstractCamera]:
         """Get a list of all discovered cameras."""

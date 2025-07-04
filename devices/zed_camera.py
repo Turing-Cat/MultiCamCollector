@@ -1,7 +1,6 @@
 import pyzed.sl as sl
 import numpy as np
 import time
-import threading
 from typing import Iterator
 
 from devices.abstract_camera import AbstractCamera
@@ -17,8 +16,6 @@ class ZedCamera(AbstractCamera):
         self._init_params = sl.InitParameters()
         self._is_connected = False
         self._sequence_id = 0
-        self._capture_event = threading.Event()
-        self._last_frame = None
 
         self._init_params.camera_resolution = sl.RESOLUTION.HD720
         self._init_params.camera_fps = 30
@@ -71,41 +68,6 @@ class ZedCamera(AbstractCamera):
         else:
             raise RuntimeError("Failed to grab ZED frame.")
 
-    def trigger_capture(self) -> None:
-        """Trigger a non-blocking frame capture."""
-        if not self._is_connected:
-            return
-        self._capture_event.clear()
-        threading.Thread(target=self._threaded_capture).start()
-
-    def _threaded_capture(self):
-        """Capture frame in a separate thread."""
-        try:
-            self._last_frame = self.capture_frame()
-            self._capture_event.set()
-        except Exception as e:
-            print(f"Error during threaded capture for {self.camera_id}: {e}")
-            self._capture_event.set()
-
-    def collect_frame(self) -> Frame:
-        """Collect the frame after triggering capture."""
-        if not self._is_connected:
-            raise ConnectionError(f"Camera {self._camera_id} is not connected.")
-        
-        self._capture_event.wait(timeout=2.0)
-        if not self._capture_event.is_set():
-            raise TimeoutError(f"Frame collection timed out for {self.camera_id}")
-        
-        return self._last_frame
-
-    def check_connection(self) -> bool:
-        """Check if the ZED camera is still connected."""
-        if self._zed.is_opened():
-            if self._zed.grab() == sl.ERROR_CODE.SUCCESS:
-                return True
-        self._is_connected = False
-        return False
-
     def stream(self) -> Iterator[Frame]:
         while self._is_connected:
             yield self.capture_frame()
@@ -117,3 +79,4 @@ class ZedCamera(AbstractCamera):
     @property
     def camera_id(self) -> str:
         return self._camera_id
+

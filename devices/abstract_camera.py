@@ -22,23 +22,8 @@ class AbstractCamera(ABC):
         pass
 
     @abstractmethod
-    def trigger_capture(self) -> None:
-        """Trigger a non-blocking frame capture."""
-        pass
-
-    @abstractmethod
-    def collect_frame(self) -> Frame:
-        """Collect the frame after triggering capture."""
-        pass
-
-    @abstractmethod
     def stream(self) -> Iterator[Frame]:
         """Stream frames from the camera."""
-        pass
-
-    @abstractmethod
-    def check_connection(self) -> bool:
-        """Check the camera's connection status."""
         pass
 
     @property
