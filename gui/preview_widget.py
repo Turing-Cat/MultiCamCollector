@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QGridLayout
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QObject
 from PyQt6.QtGui import QImage, QPixmap
 import cv2
+import numpy as np
 import time
 import threading
 from devices.abstract_camera import AbstractCamera
@@ -60,21 +61,51 @@ class PreviewWidget(QWidget):
         if frame is None:
             self.image_label.setText("No Frame")
             return
-            
-        rgb_image = frame.rgb_image
-        if len(rgb_image.shape) == 3 and rgb_image.shape[2] == 3:
-            h, w, _ = rgb_image.shape
-            rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB)
-            bytes_per_line = 3 * w
-            q_img = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
-            pixmap = QPixmap.fromImage(q_img)
-            
-            scaled_pixmap = pixmap.scaled(
-                self.image_label.size(),
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation
-            )
-            self.image_label.setPixmap(scaled_pixmap)
+
+        try:
+            rgb_image = frame.rgb_image
+            if rgb_image is None or rgb_image.size == 0:
+                self.image_label.setText("Empty Frame")
+                return
+
+            # Debug: Print frame info for troubleshooting (only for first few frames)
+            if hasattr(self, '_frame_count'):
+                self._frame_count += 1
+            else:
+                self._frame_count = 1
+                print(f"First frame info for {self.camera_id_label.text()} - Shape: {rgb_image.shape}, dtype: {rgb_image.dtype}")
+
+            if len(rgb_image.shape) == 3 and rgb_image.shape[2] >= 3:
+                h, w = rgb_image.shape[:2]
+
+                # ZED cameras typically output BGR format, convert to RGB for Qt
+                if rgb_image.shape[2] == 4:  # BGRA format
+                    rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGRA2RGB)
+                elif rgb_image.shape[2] == 3:  # BGR format
+                    rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB)
+
+                # Ensure the image is contiguous in memory
+                rgb_image = np.ascontiguousarray(rgb_image)
+
+                bytes_per_line = 3 * w
+                q_img = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
+                pixmap = QPixmap.fromImage(q_img)
+
+                if not pixmap.isNull():
+                    scaled_pixmap = pixmap.scaled(
+                        self.image_label.size(),
+                        Qt.AspectRatioMode.KeepAspectRatio,
+                        Qt.TransformationMode.SmoothTransformation
+                    )
+                    self.image_label.setPixmap(scaled_pixmap)
+                else:
+                    self.image_label.setText("Invalid Image")
+            else:
+                self.image_label.setText(f"Unsupported Format: {rgb_image.shape}")
+
+        except Exception as e:
+            print(f"Error updating frame for {self.camera_id_label.text()}: {e}")
+            self.image_label.setText("Display Error")
 
 class PreviewGrid(QWidget):
     """A grid of preview widgets that uses background threads for updates."""

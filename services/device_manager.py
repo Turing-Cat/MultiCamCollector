@@ -25,6 +25,9 @@ class DeviceManager:
         for camera in self._cameras:
             try:
                 camera.connect()
+                # ZED camera connection status
+                if isinstance(camera, ZedCamera):
+                    print(f"ZED camera {camera.camera_id} connected")
             except Exception as e:
                 print(f"Could not connect to camera {camera.camera_id}: {e}")
 
@@ -61,8 +64,7 @@ class DeviceManager:
             MockCamera(camera_id="D435i_1", model="D435i"),
             MockCamera(camera_id="D435i_2", model="D435i"),
             MockCamera(camera_id="D435i_3", model="D435i"),
-            MockCamera(camera_id="D435i_4", model="D435i"),
-            MockCamera(camera_id="ZED2i_1", model="ZED2i")
+            MockCamera(camera_id="D435i_4", model="D435i")
         ]
 
     def get_all_cameras(self) -> List[AbstractCamera]:
@@ -75,3 +77,4 @@ class DeviceManager:
             if camera.camera_id == camera_id:
                 return camera
         raise ValueError(f"Camera with ID {camera_id} not found.")
+

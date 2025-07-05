@@ -5,6 +5,13 @@ exposure:
   d435i: 150
   zed2i: 100
 
+# ZED Camera Settings
+zed:
+  enable_self_calibration: false  # Set to true to enable self-calibration on startup
+  depth_mode: "PERFORMANCE"       # Options: PERFORMANCE, QUALITY, ULTRA, NEURAL
+  depth_stabilization: true
+  depth_minimum_distance: 200     # Minimum depth distance in mm
+
 # Storage Settings
 dataset_root_dir: "D:/Dataset"
 directory_format: "{date}/{lighting}/{background_id}"
