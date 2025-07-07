@@ -29,9 +29,8 @@ class StorageService:
             json.dump(metadata.to_dict(), f, indent=4, ensure_ascii=False)
 
         # Save frames
+        timestamp_str = datetime.now().strftime("%Y%m%dT%H%M%S%f")[:-3]  # Milliseconds
         for frame in frames:
-            timestamp_str = datetime.now().strftime("%Y%m%dT%H%M%S%f")[:-3]  # Milliseconds
-            
             if settings.get("save_rgb", False):
                 rgb_filename = f"{timestamp_str}_{frame.camera_id}_RGB.png"
                 rgb_path = os.path.join(session_dir, rgb_filename)
