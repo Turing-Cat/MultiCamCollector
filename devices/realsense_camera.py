@@ -1,7 +1,8 @@
 import pyrealsense2 as rs
 import numpy as np
 import time
-from typing import Iterator
+import yaml
+from typing import Iterator, Tuple
 
 from devices.abstract_camera import AbstractCamera
 from models.camera import Frame
@@ -17,12 +18,29 @@ class RealsenseCamera(AbstractCamera):
         self._align = rs.align(rs.stream.color)
         self._is_connected = False
         self._sequence_id = 0
+        
+        # Load configuration from file
+        self._width, self._height, self._fps = self._load_config()
+
+    def _load_config(self) -> Tuple[int, int, int]:
+        """Loads camera configuration from config.yaml."""
+        try:
+            with open("config.yaml", "r") as f:
+                config = yaml.safe_load(f)
+                res_str = config.get("camera_resolution", "640x480")
+                width, height = map(int, res_str.split('x'))
+                fps = int(config.get("camera_fps", 30))
+                print(f"RealSense config loaded: {width}x{height} @ {fps}fps")
+                return width, height, fps
+        except (FileNotFoundError, ValueError, KeyError) as e:
+            print(f"Warning: Could not load or parse config.yaml ({e}). Using default RealSense settings (640x480 @ 30fps).")
+            return 640, 480, 30
 
     def connect(self) -> None:
         try:
             self._config.enable_device(self._serial_number)
-            self._config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
-            self._config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+            self._config.enable_stream(rs.stream.color, self._width, self._height, rs.format.bgr8, self._fps)
+            self._config.enable_stream(rs.stream.depth, self._width, self._height, rs.format.z16, self._fps)
             profile = self._pipeline.start(self._config)
             
             self._align = rs.align(rs.stream.color)
