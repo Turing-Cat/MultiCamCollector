@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         left_splitter = QSplitter(Qt.Orientation.Vertical)
         left_splitter.addWidget(self.preview_grid)
         left_splitter.addWidget(self.log_panel)
-        left_splitter.setSizes([700, 300])
+        left_splitter.setSizes([800, 200])
 
         # Right side (metadata, settings)
         right_layout = QVBoxLayout()
@@ -81,8 +81,8 @@ class MainWindow(QMainWindow):
 
         frames = self.capture_orchestrator.capture_all_frames()
         if frames:
-            self.storage_service.save(frames, metadata, settings)
-            self.log_panel.add_log_message(f"Saved {len(frames)} frames.")
+            session_dir = self.storage_service.save(frames, metadata, settings)
+            self.log_panel.add_log_message(f"Saved {len(frames)} frames to: {session_dir}")
             
             if not self.metadata_panel.lock_checkbox.isChecked():
                 self.sequence_counter.increment()
@@ -108,7 +108,7 @@ def main():
     """Main function to run the application."""
     app = QApplication(sys.argv)
     main_window = MainWindow()
-    main_window.show()
+    main_window.showMaximized()
     sys.exit(app.exec())
 
 if __name__ == "__main__":

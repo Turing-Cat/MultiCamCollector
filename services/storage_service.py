@@ -19,8 +19,8 @@ class StorageService:
         self._root_dir = root_dir
         os.makedirs(self._root_dir, exist_ok=True)
 
-    def save(self, frames: List[Frame], metadata: CaptureMetadata, settings: Dict[str, Any]) -> None:
-        """Save frames and metadata to a structured directory based on settings."""
+    def save(self, frames: List[Frame], metadata: CaptureMetadata, settings: Dict[str, Any]) -> str:
+        """Save frames and metadata, then return the session directory."""
         session_dir = self._create_session_directory(metadata)
 
         # Save metadata
@@ -39,7 +39,9 @@ class StorageService:
             if settings.get("save_depth", False):
                 depth_filename = f"{timestamp_str}_{frame.camera_id}_Depth.tiff"
                 depth_path = os.path.join(session_dir, depth_filename)
-                self._save_image_unicode(depth_path, frame.depth_image.astype("uint16"))
+                # Handle potential NaN/inf values in depth data before casting
+                safe_depth_image = np.nan_to_num(frame.depth_image, nan=0.0, posinf=0.0, neginf=0.0)
+                self._save_image_unicode(depth_path, safe_depth_image.astype("uint16"))
 
             if settings.get("save_point_cloud", False):
                 pc_filename = f"{timestamp_str}_{frame.camera_id}_PC.ply"
@@ -47,6 +49,7 @@ class StorageService:
                 self._save_placeholder_ply(pc_path)
 
         print(f"Saved data for {len(frames)} frames to {session_dir}")
+        return session_dir
 
     def _save_image_unicode(self, path: str, image: np.ndarray):
         """Saves an image to a path that may contain Unicode characters."""
