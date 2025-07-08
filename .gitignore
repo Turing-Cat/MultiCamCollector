@@ -9,7 +9,6 @@ __pycache__/
 
 # Distribution / packaging
 .Python
-issues/
 build/
 temp/
 develop-eggs/

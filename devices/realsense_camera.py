@@ -39,6 +39,7 @@ class RealsenseCamera(AbstractCamera):
 
     def connect(self) -> None:
         try:
+            print(f"Attempting to connect RealSense camera {self._camera_id} with {self._width}x{self._height} @ {self._fps}fps...")
             self._config.enable_device(self._serial_number)
             self._config.enable_stream(rs.stream.color, self._width, self._height, rs.format.bgr8, self._fps)
             self._config.enable_stream(rs.stream.depth, self._width, self._height, rs.format.z16, self._fps)
@@ -47,10 +48,29 @@ class RealsenseCamera(AbstractCamera):
             self._align = rs.align(rs.stream.color)
             
             self._is_connected = True
-            print(f"RealSense camera {self._camera_id} connected.")
+            print(f"RealSense camera {self._camera_id} connected successfully.")
+
         except Exception as e:
-            print(f"Error connecting to RealSense camera {self._camera_id}: {e}")
-            self._is_connected = False
+            print(f"Warning: Failed to connect RealSense camera {self._camera_id} with primary config: {e}")
+            print("Attempting fallback configuration (640x480 @ 30fps)...")
+            
+            # Clean up previous config attempt
+            self._pipeline = rs.pipeline()
+            self._config = rs.config()
+            
+            try:
+                self._config.enable_device(self._serial_number)
+                self._config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+                self._config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+                profile = self._pipeline.start(self._config)
+
+                self._align = rs.align(rs.stream.color)
+                
+                self._is_connected = True
+                print(f"RealSense camera {self._camera_id} connected with fallback configuration.")
+            except Exception as fallback_e:
+                print(f"Error: Failed to connect to RealSense camera {self._camera_id} with fallback config: {fallback_e}")
+                self._is_connected = False
 
     def disconnect(self) -> None:
         if self._is_connected:
@@ -70,8 +90,8 @@ class RealsenseCamera(AbstractCamera):
         if not color_frame or not depth_frame:
             raise RuntimeError("Failed to get RealSense frames.")
 
-        rgb_image = np.asanyarray(color_frame.get_data())
-        depth_image = np.asanyarray(depth_frame.get_data())
+        rgb_image = np.asanyarray(color_frame.get_data()).copy()
+        depth_image = np.asanyarray(depth_frame.get_data()).copy()
 
         timestamp_ns = int(time.time_ns())
         frame = Frame(

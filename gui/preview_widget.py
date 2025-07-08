@@ -63,6 +63,10 @@ class PreviewWidget(QWidget):
             return
 
         try:
+            if not isinstance(frame.rgb_image, np.ndarray):
+                self.image_label.setText("Invalid Frame Type")
+                return
+
             rgb_image = frame.rgb_image
             if rgb_image is None or rgb_image.size == 0:
                 self.image_label.setText("Empty Frame")

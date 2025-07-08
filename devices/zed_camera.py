@@ -1,3 +1,4 @@
+import platform
 from devices import sdk_loader
 import pyzed.sl as sl
 import numpy as np
@@ -54,9 +55,19 @@ class ZedCamera(AbstractCamera):
                 # ZED-specific settings
                 zed_config = config.get("zed", {})
                 self._init_params.depth_mode = getattr(sl.DEPTH_MODE, zed_config.get("depth_mode", "PERFORMANCE"))
-                self._init_params.depth_stabilization = bool(zed_config.get("depth_stabilization", True))
+
+                # Platform-specific type handling for ZED SDK
+                depth_stabilization = bool(zed_config.get("depth_stabilization", True))
+                enable_self_calibration = bool(zed_config.get("enable_self_calibration", False))
+
+                if platform.system() == "Linux":
+                    self._init_params.depth_stabilization = depth_stabilization
+                    self._init_params.camera_disable_self_calib = not enable_self_calibration
+                else:
+                    self._init_params.depth_stabilization = int(depth_stabilization)
+                    self._init_params.camera_disable_self_calib = int(not enable_self_calibration)
+
                 self._init_params.depth_minimum_distance = int(zed_config.get("depth_minimum_distance", 200))
-                self._init_params.camera_disable_self_calib = not bool(zed_config.get("enable_self_calibration", False))
 
                 print(f"ZED config loaded: {res_str} @ {self._init_params.camera_fps}fps, Depth: {self._init_params.depth_mode}")
 

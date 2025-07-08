@@ -8,6 +8,9 @@ from devices.realsense_camera import RealsenseCamera
 from devices.zed_camera import ZedCamera
 from devices.mock_camera import MockCamera
 
+import platform
+import time
+
 class DeviceManager:
     """Manages the discovery and status of connected cameras."""
 
@@ -36,6 +39,7 @@ class DeviceManager:
         for camera in self._cameras:
             try:
                 camera.connect()
+                time.sleep(2)  # Increased delay to prevent conflicts on Linux
                 # ZED camera connection status
                 if isinstance(camera, ZedCamera):
                     print(f"ZED camera {camera.camera_id} connected")
