@@ -1,10 +1,20 @@
 import sys
+import platform
+import os
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QSplitter
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QShortcut, QKeySequence
 from gui import PreviewGrid, MetadataPanel, LogPanel, SettingsPanel
 from services import DeviceManager, CaptureOrchestrator, StorageService, SequenceCounter
 from models import CaptureMetadata
+
+def get_zed_sdk_path():
+    """Get the ZED SDK path based on the operating system."""
+    if platform.system() == "Windows":
+        return os.environ.get("ZED_SDK_ROOT_DIR", "C:/Program Files (x86)/ZED SDK")
+    elif platform.system() == "Linux":
+        return os.environ.get("ZED_SDK_ROOT_DIR", "/usr/local/zed")
+    return None
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -14,7 +24,8 @@ class MainWindow(QMainWindow):
 
         # Initialize services
         storage_root = "D:/Dataset"
-        self.device_manager = DeviceManager()
+        zed_sdk_path = get_zed_sdk_path()
+        self.device_manager = DeviceManager(zed_sdk_path=zed_sdk_path)
         self.device_manager.discover_cameras()
         self.storage_service = StorageService(root_dir=storage_root)
         self.sequence_counter = SequenceCounter(storage_dir=storage_root)

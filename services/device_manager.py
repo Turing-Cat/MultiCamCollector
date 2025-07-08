@@ -1,6 +1,8 @@
 import pyrealsense2 as rs
 import pyzed.sl as sl
 from typing import List
+import platform
+import os
 from devices.abstract_camera import AbstractCamera
 from devices.realsense_camera import RealsenseCamera
 from devices.zed_camera import ZedCamera
@@ -9,8 +11,17 @@ from devices.mock_camera import MockCamera
 class DeviceManager:
     """Manages the discovery and status of connected cameras."""
 
-    def __init__(self):
+    def __init__(self, zed_sdk_path=None):
         self._cameras: List[AbstractCamera] = []
+        if zed_sdk_path:
+            self._set_zed_sdk_path(zed_sdk_path)
+
+    def _set_zed_sdk_path(self, zed_sdk_path):
+        """Set the ZED SDK path for the current OS."""
+        if platform.system() == "Windows":
+            os.add_dll_directory(zed_sdk_path)
+        elif platform.system() == "Linux":
+            pass
 
     def discover_cameras(self) -> None:
         """Discover and connect to all available cameras."""

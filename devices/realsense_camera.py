@@ -1,3 +1,4 @@
+from devices import sdk_loader
 import pyrealsense2 as rs
 import numpy as np
 import time
