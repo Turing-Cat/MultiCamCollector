@@ -68,6 +68,11 @@ class RealsenseCamera(AbstractCamera):
                 
                 self._is_connected = True
                 print(f"RealSense camera {self._camera_id} connected with fallback configuration.")
+
+                # Pre-heat to allow auto-exposure to settle
+                for _ in range(30):
+                    self._pipeline.poll_for_frames()
+                    time.sleep(0.03)
             except Exception as fallback_e:
                 print(f"Error: Failed to connect to RealSense camera {self._camera_id} with fallback config: {fallback_e}")
                 self._is_connected = False
@@ -82,7 +87,7 @@ class RealsenseCamera(AbstractCamera):
         if not self._is_connected:
             raise ConnectionError(f"Camera {self._camera_id} is not connected.")
         
-        frames = self._pipeline.wait_for_frames()
+        frames = self._pipeline.wait_for_frames(timeout_ms=10000)
         aligned_frames = self._align.process(frames)
         color_frame = aligned_frames.get_color_frame()
         depth_frame = aligned_frames.get_depth_frame()
@@ -107,14 +112,6 @@ class RealsenseCamera(AbstractCamera):
     def stream(self) -> Iterator[Frame]:
         while self._is_connected:
             yield self.capture_frame()
-
-    @property
-    def is_connected(self) -> bool:
-        return self._is_connected
-
-    @property
-    def camera_id(self) -> str:
-        return self._camera_id
 
     @property
     def is_connected(self) -> bool:

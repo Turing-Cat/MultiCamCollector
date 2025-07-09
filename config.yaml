@@ -13,7 +13,7 @@ zed:
   depth_minimum_distance: 200     # Minimum depth distance in mm
 
 # Storage Settings
-dataset_root_dir: "D:/Dataset"
+dataset_root_dir: "../the-dataset"
 directory_format: "{date}/{lighting}/{background_id}"
 
 # Logging

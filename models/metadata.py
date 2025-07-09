@@ -4,9 +4,9 @@ import time
 
 class LightingLevel(Enum):
     """Enum for lighting levels."""
-    VERY_DARK = "极暗"
-    DARK = "暗光"
-    NORMAL = "正常光"
+    VERY_DARK = "VeryDark"
+    DARK = "Dark"
+    NORMAL = "Normal"
 
 @dataclass
 class CaptureMetadata:

@@ -3,7 +3,8 @@ import platform
 import os
 import logging
 import time
-from typing import Union
+import yaml
+from typing import Union, Dict, Any
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
@@ -114,7 +115,9 @@ class MainWindow(QMainWindow):
         # -----------------------------
         # Services 初始化
         # -----------------------------
-        storage_root = "D:/Dataset"  # TODO: 可在 SettingsPanel 中修改
+        # Set the storage root to the parent directory of the project
+        project_dir = os.path.dirname(os.path.abspath(__file__))
+        storage_root = os.path.join(os.path.dirname(project_dir), "the-dataset")
         zed_sdk_path = get_zed_sdk_path()
 
         self.device_manager = DeviceManager(zed_sdk_path=zed_sdk_path)

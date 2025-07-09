@@ -60,12 +60,8 @@ class ZedCamera(AbstractCamera):
                 depth_stabilization = bool(zed_config.get("depth_stabilization", True))
                 enable_self_calibration = bool(zed_config.get("enable_self_calibration", False))
 
-                if platform.system() == "Linux":
-                    self._init_params.depth_stabilization = depth_stabilization
-                    self._init_params.camera_disable_self_calib = not enable_self_calibration
-                else:
-                    self._init_params.depth_stabilization = int(depth_stabilization)
-                    self._init_params.camera_disable_self_calib = int(not enable_self_calibration)
+                self._init_params.depth_stabilization = int(depth_stabilization)      # 仍然用 int
+                self._init_params.camera_disable_self_calib = not enable_self_calibration  # 恢复为 bool
 
                 self._init_params.depth_minimum_distance = int(zed_config.get("depth_minimum_distance", 200))
 
