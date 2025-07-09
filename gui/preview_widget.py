@@ -43,18 +43,25 @@ class PreviewWidget(QWidget):
 
     def __init__(self, camera_id: str):
         super().__init__()
-        
+
+        # Set fixed size constraints for uniform appearance
+        self.setMinimumSize(300, 200)
+        self.setMaximumSize(400, 300)
+
         layout = QVBoxLayout()
         self.setLayout(layout)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(2)
-        
+        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setSpacing(5)
+
         self.camera_id_label = QLabel(camera_id)
         self.camera_id_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.camera_id_label.setStyleSheet("font-weight: bold; padding: 2px;")
         layout.addWidget(self.camera_id_label)
-        
+
         self.image_label = QLabel()
-        self.image_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.setStyleSheet("border: 1px solid #ccc; background-color: #f0f0f0;")
+        self.image_label.setMinimumSize(280, 160)
         layout.addWidget(self.image_label, 1)
 
     def update_frame(self, frame):
@@ -97,12 +104,23 @@ class PreviewWidget(QWidget):
                 pixmap = QPixmap.fromImage(q_img)
 
                 if not pixmap.isNull():
-                    scaled_pixmap = pixmap.scaled(
-                        self.image_label.size(),
-                        Qt.AspectRatioMode.KeepAspectRatio,
-                        Qt.TransformationMode.SmoothTransformation
-                    )
-                    self.image_label.setPixmap(scaled_pixmap)
+                    # Scale to fit the image label while maintaining aspect ratio
+                    label_size = self.image_label.size()
+                    if label_size.width() > 0 and label_size.height() > 0:
+                        scaled_pixmap = pixmap.scaled(
+                            label_size,
+                            Qt.AspectRatioMode.KeepAspectRatio,
+                            Qt.TransformationMode.SmoothTransformation
+                        )
+                        self.image_label.setPixmap(scaled_pixmap)
+                    else:
+                        # Fallback to a reasonable default size if label size is not available
+                        scaled_pixmap = pixmap.scaled(
+                            280, 160,
+                            Qt.AspectRatioMode.KeepAspectRatio,
+                            Qt.TransformationMode.SmoothTransformation
+                        )
+                        self.image_label.setPixmap(scaled_pixmap)
                 else:
                     self.image_label.setText("Invalid Image")
             else:
@@ -124,24 +142,43 @@ class PreviewGrid(QWidget):
 
         layout = QGridLayout()
         self.setLayout(layout)
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setSpacing(10)
 
         cameras = self.device_manager.get_all_cameras()
         if not cameras:
             return
 
-        # --- Layout Enhancement ---
-        # Keep the 3-column layout but make it responsive.
-        num_cols = 3
-        num_rows = (len(cameras) + num_cols - 1) // num_cols
+        # --- Optimized Layout for Multiple Cameras ---
+        num_cameras = len(cameras)
 
+        # Define optimal grid arrangements for different camera counts
+        if num_cameras <= 2:
+            num_cols, num_rows = 2, 1
+        elif num_cameras <= 4:
+            num_cols, num_rows = 2, 2
+        elif num_cameras == 5:
+            # For 5 cameras, use 3x2 grid with cameras arranged as:
+            # [1] [2] [3]
+            # [4] [5] [ ]
+            num_cols, num_rows = 3, 2
+        elif num_cameras <= 6:
+            num_cols, num_rows = 3, 2
+        elif num_cameras <= 9:
+            num_cols, num_rows = 3, 3
+        else:
+            # For more cameras, use a more square-like arrangement
+            num_cols = int(np.ceil(np.sqrt(num_cameras)))
+            num_rows = int(np.ceil(num_cameras / num_cols))
+
+        # Create and position preview widgets
         for i, camera in enumerate(cameras):
             row, col = divmod(i, num_cols)
             preview = PreviewWidget(camera.camera_id)
             self.previews[camera.camera_id] = preview
             layout.addWidget(preview, row, col)
 
-            # --- Worker Thread Setup (same as before) ---
+            # --- Worker Thread Setup ---
             thread = QThread()
             worker = FrameWorker(camera)
             self.workers[camera.camera_id] = worker
@@ -153,12 +190,15 @@ class PreviewGrid(QWidget):
             self.threads.append((thread, worker))
             thread.start()
 
-        # --- Add Stretch to Grid ---
-        # This ensures that the grid cells expand to fill available space.
+        # --- Configure Grid Stretching ---
+        # Set uniform stretch factors for all rows and columns
         for r in range(num_rows):
             layout.setRowStretch(r, 1)
         for c in range(num_cols):
             layout.setColumnStretch(c, 1)
+
+        # Center the grid content
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def on_frame_ready(self, frame):
         """Slot to receive a frame and update the corresponding preview."""
