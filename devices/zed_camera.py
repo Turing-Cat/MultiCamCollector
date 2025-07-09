@@ -3,10 +3,7 @@ from devices import sdk_loader
 import pyzed.sl as sl
 import numpy as np
 import time
-import yaml
-from typing import Iterator
-import sys
-import os
+from typing import Iterator, Dict, Any, Tuple
 
 from devices.abstract_camera import AbstractCamera
 from models.camera import Frame
@@ -22,7 +19,7 @@ class ZedCamera(AbstractCamera):
         "672x376": sl.RESOLUTION.VGA,
     }
 
-    def __init__(self, camera_id: str, serial_number: str):
+    def __init__(self, camera_id: str, serial_number: str, resolution_wh: Tuple[int, int], fps: int, zed_config: Dict[str, Any]):
         # 基本属性
         self._camera_id = camera_id
         self._serial_number = serial_number
@@ -31,8 +28,8 @@ class ZedCamera(AbstractCamera):
         self._is_connected = False
         self._sequence_id = 0
 
-        # 从配置文件加载并设置参数
-        self._apply_config()
+        # 从传入的配置设置参数
+        self._apply_config(resolution_wh, fps, zed_config)
         
         self._init_params.set_from_serial_number(int(self._serial_number))
 
@@ -41,34 +38,29 @@ class ZedCamera(AbstractCamera):
         self._depth_sl: sl.Mat = sl.Mat()
         # ------------------------------------
 
-    def _apply_config(self):
-        """Loads settings from config.yaml and applies them to ZED init parameters."""
+    def _apply_config(self, resolution_wh: Tuple[int, int], fps: int, zed_config: Dict[str, Any]):
+        """Applies settings from the provided configuration."""
         try:
-            with open("config.yaml", "r") as f:
-                config = yaml.safe_load(f)
-                
-                # Resolution and FPS
-                res_str = config.get("camera_resolution", "1280x720")
-                self._init_params.camera_resolution = self.RESOLUTION_MAP.get(res_str, sl.RESOLUTION.HD720)
-                self._init_params.camera_fps = int(config.get("camera_fps", 30))
-                
-                # ZED-specific settings
-                zed_config = config.get("zed", {})
-                self._init_params.depth_mode = getattr(sl.DEPTH_MODE, zed_config.get("depth_mode", "PERFORMANCE"))
+            res_str = f"{resolution_wh[0]}x{resolution_wh[1]}"
+            self._init_params.camera_resolution = self.RESOLUTION_MAP.get(res_str, sl.RESOLUTION.HD720)
+            self._init_params.camera_fps = fps
+            
+            # ZED-specific settings
+            self._init_params.depth_mode = getattr(sl.DEPTH_MODE, zed_config.get("depth_mode", "PERFORMANCE"))
 
-                # Platform-specific type handling for ZED SDK
-                depth_stabilization = bool(zed_config.get("depth_stabilization", True))
-                enable_self_calibration = bool(zed_config.get("enable_self_calibration", False))
+            # Platform-specific type handling for ZED SDK
+            depth_stabilization = bool(zed_config.get("depth_stabilization", True))
+            enable_self_calibration = bool(zed_config.get("enable_self_calibration", False))
 
-                self._init_params.depth_stabilization = int(depth_stabilization)      # 仍然用 int
-                self._init_params.camera_disable_self_calib = not enable_self_calibration  # 恢复为 bool
+            self._init_params.depth_stabilization = int(depth_stabilization)
+            self._init_params.camera_disable_self_calib = not enable_self_calibration
 
-                self._init_params.depth_minimum_distance = int(zed_config.get("depth_minimum_distance", 200))
+            self._init_params.depth_minimum_distance = int(zed_config.get("depth_minimum_distance", 200))
 
-                print(f"ZED config loaded: {res_str} @ {self._init_params.camera_fps}fps, Depth: {self._init_params.depth_mode}")
+            print(f"ZED config loaded: {res_str} @ {self._init_params.camera_fps}fps, Depth: {self._init_params.depth_mode}")
 
-        except (FileNotFoundError, KeyError, ValueError, AttributeError) as e:
-            print(f"Warning: Could not load or parse config.yaml ({e}). Using default ZED settings.")
+        except (KeyError, ValueError, AttributeError) as e:
+            print(f"Warning: Could not parse provided config ({e}). Using default ZED settings.")
             # Apply default settings
             self._init_params.camera_resolution = sl.RESOLUTION.HD720
             self._init_params.camera_fps = 30

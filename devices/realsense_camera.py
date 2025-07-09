@@ -2,7 +2,6 @@ from devices import sdk_loader
 import pyrealsense2 as rs
 import numpy as np
 import time
-import yaml
 from typing import Iterator, Tuple
 
 from devices.abstract_camera import AbstractCamera
@@ -11,31 +10,21 @@ from models.camera import Frame
 class RealsenseCamera(AbstractCamera):
     """Concrete implementation of AbstractCamera for Intel RealSense cameras."""
 
-    def __init__(self, camera_id: str, serial_number: str):
+    def __init__(self, camera_id: str, serial_number: str, width: int, height: int, fps: int):
         self._camera_id = camera_id
         self._serial_number = serial_number
+        self._width = width
+        self._height = height
+        self._fps = fps
+        
         self._pipeline = rs.pipeline()
         self._config = rs.config()
         self._align = rs.align(rs.stream.color)
         self._is_connected = False
         self._sequence_id = 0
-        
-        # Load configuration from file
-        self._width, self._height, self._fps = self._load_config()
 
-    def _load_config(self) -> Tuple[int, int, int]:
-        """Loads camera configuration from config.yaml."""
-        try:
-            with open("config.yaml", "r") as f:
-                config = yaml.safe_load(f)
-                res_str = config.get("camera_resolution", "640x480")
-                width, height = map(int, res_str.split('x'))
-                fps = int(config.get("camera_fps", 30))
-                print(f"RealSense config loaded: {width}x{height} @ {fps}fps")
-                return width, height, fps
-        except (FileNotFoundError, ValueError, KeyError) as e:
-            print(f"Warning: Could not load or parse config.yaml ({e}). Using default RealSense settings (640x480 @ 30fps).")
-            return 640, 480, 30
+
+    
 
     def connect(self) -> None:
         try:

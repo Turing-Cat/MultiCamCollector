@@ -3,7 +3,6 @@ import platform
 import os
 import logging
 import time
-import yaml
 from typing import Union, Dict, Any
 from PyQt6.QtWidgets import (
     QApplication,

@@ -7,6 +7,7 @@ from devices.abstract_camera import AbstractCamera
 from devices.realsense_camera import RealsenseCamera
 from devices.zed_camera import ZedCamera
 from devices.mock_camera import MockCamera
+from services.config_service import ConfigService
 
 import platform
 import time
@@ -16,6 +17,7 @@ class DeviceManager:
 
     def __init__(self, zed_sdk_path=None):
         self._cameras: List[AbstractCamera] = []
+        self._config_service = ConfigService()
         if zed_sdk_path:
             self._set_zed_sdk_path(zed_sdk_path)
 
@@ -51,10 +53,19 @@ class DeviceManager:
         try:
             ctx = rs.context()
             devices = ctx.query_devices()
+            width, height = self._config_service.camera_resolution
+            fps = self._config_service.camera_fps
+            
             for i, dev in enumerate(devices):
                 serial_number = dev.get_info(rs.camera_info.serial_number)
                 camera_id = f"RealSense_{serial_number}"
-                camera = RealsenseCamera(camera_id=camera_id, serial_number=serial_number)
+                camera = RealsenseCamera(
+                    camera_id=camera_id, 
+                    serial_number=serial_number,
+                    width=width,
+                    height=height,
+                    fps=fps
+                )
                 self._cameras.append(camera)
                 print(f"Found RealSense camera: {camera_id}")
         except Exception as e:
@@ -64,10 +75,20 @@ class DeviceManager:
         """Discover and initialize ZED cameras."""
         try:
             zed_list = sl.Camera.get_device_list()
+            width, height = self._config_service.camera_resolution
+            fps = self._config_service.camera_fps
+            zed_settings = self._config_service.zed_settings
+
             for i, zed_info in enumerate(zed_list):
                 serial_number = str(zed_info.serial_number)
                 camera_id = f"ZED_{serial_number}"
-                camera = ZedCamera(camera_id=camera_id, serial_number=serial_number)
+                camera = ZedCamera(
+                    camera_id=camera_id, 
+                    serial_number=serial_number,
+                    resolution_wh=(width, height),
+                    fps=fps,
+                    zed_config=zed_settings
+                )
                 self._cameras.append(camera)
                 print(f"Found ZED camera: {camera_id}")
         except Exception as e:
