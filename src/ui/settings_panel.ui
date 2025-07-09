@@ -19,52 +19,31 @@
      <property name="title">
       <string>Data Saving Settings</string>
      </property>
-     <layout class="QFormLayout" name="formLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Save RGB Images:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
        <widget class="QCheckBox" name="save_rgb_checkbox">
         <property name="text">
-         <string/>
+         <string>Save RGB Images</string>
         </property>
         <property name="checked">
          <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Save Depth Images:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
+      <item>
        <widget class="QCheckBox" name="save_depth_checkbox">
         <property name="text">
-         <string/>
+         <string>Save Depth Images</string>
         </property>
         <property name="checked">
          <bool>true</bool>
         </property>
        </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Save Point Clouds:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
+      <item>
        <widget class="QCheckBox" name="save_point_cloud_checkbox">
         <property name="text">
-         <string/>
+         <string>Save Point Clouds</string>
         </property>
        </widget>
       </item>

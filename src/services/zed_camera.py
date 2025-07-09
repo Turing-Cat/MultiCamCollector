@@ -35,6 +35,7 @@ class ZedCamera(AbstractCamera):
 
         # -------- 关键改动：持久化 Mat --------
         self._image_sl: sl.Mat = sl.Mat()
+        self._image_right_sl: sl.Mat = sl.Mat()
         self._depth_sl: sl.Mat = sl.Mat()
         # ------------------------------------
 
@@ -107,6 +108,8 @@ class ZedCamera(AbstractCamera):
         # 释放持久 Mat 所占 CPU 内存
         if self._image_sl.is_init():   # is_init() 由 ZED SDK 提供
             self._image_sl.free()
+        if self._image_right_sl.is_init():
+            self._image_right_sl.free()
         if self._depth_sl.is_init():
             self._depth_sl.free()
 
@@ -130,10 +133,12 @@ class ZedCamera(AbstractCamera):
 
         # 复用持久 Mat，避免每帧重新分配
         self._zed.retrieve_image(self._image_sl, sl.VIEW.LEFT)
+        self._zed.retrieve_image(self._image_right_sl, sl.VIEW.RIGHT)
         self._zed.retrieve_measure(self._depth_sl, sl.MEASURE.DEPTH)
 
         # 关键：立即 copy，解除对 Mat 生命周期的依赖
         rgb_image = self._image_sl.get_data().copy()[:, :, :3]
+        rgb_image_right = self._image_right_sl.get_data().copy()[:, :, :3]
         depth_image = self._depth_sl.get_data().copy()
 
         frame = Frame(
@@ -142,6 +147,7 @@ class ZedCamera(AbstractCamera):
             timestamp_ns=time.time_ns(),
             rgb_image=rgb_image,
             depth_image=depth_image,
+            rgb_image_right=rgb_image_right
         )
 
         self._sequence_id += 1

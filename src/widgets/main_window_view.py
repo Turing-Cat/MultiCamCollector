@@ -38,23 +38,27 @@ class MainWindowView(QMainWindow):
         # -----------------------------
         # Populate UI Containers
         # -----------------------------
-        # Left side
-        self.left_splitter.addWidget(self.preview_grid)
-        self.left_splitter.addWidget(self.log_panel)
-        self.left_splitter.setSizes([800, 200])
+        # Main preview area
+        self.camera_grid_layout.addWidget(self.preview_grid)
 
-        # Right side
+        # Right-side controls
         self.right_layout.addWidget(self.metadata_panel)
         self.right_layout.addWidget(self.settings_panel)
         self.right_layout.addStretch()
 
-        # Main splitter
-        self.main_splitter.setSizes([1300, 500])
+        # Right-side log panel
+        self.log_layout.addWidget(self.log_panel)
+
+        # -----------------------------
+        # Adjust Splitter Sizes
+        # -----------------------------
+        self.main_splitter.setSizes([1400, 520])
+        self.right_splitter.setSizes([800, 280])
 
         # -----------------------------
         # Window setup
         # -----------------------------
-        self.setMinimumSize(800, 600)
+        self.setMinimumSize(1280, 720)
         self.setWindowState(self.windowState() | Qt.WindowState.WindowMaximized)
 
     def closeEvent(self, event):

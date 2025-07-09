@@ -45,79 +45,67 @@ class FrameWorker(QObject):
             return self._last_frame
 
 class PreviewWidget(QWidget):
-    """A widget to display a single camera's preview."""
+    """A widget to display a single camera's preview with RGB and Depth."""
 
     def __init__(self, project_root: str, camera_id: str):
         super().__init__()
         ui_file = os.path.join(project_root, "ui", "preview_widget.ui")
         uic.loadUi(ui_file, self)
         self.camera_id_label.setText(camera_id)
+        self.setFixedSize(480, 360)
 
     def update_frame(self, frame):
-        """Update the displayed frame data."""
+        """Update the displayed frame data for both RGB and Depth."""
         if frame is None:
-            self.image_label.setText("No Frame")
+            self.rgb_left_image_label.setText("No Frame")
+            self.depth_image_label.setText("No Frame")
+            if hasattr(self, 'rgb_right_image_label'):
+                self.rgb_right_image_label.setText("No Frame")
             return
 
+        # Update RGB Image
+        self._update_image(self.rgb_left_image_label, frame.rgb_image, "RGB")
+
+        # Update Depth Image
+        self._update_image(self.depth_image_label, frame.depth_image, "Depth")
+
+        # Update Right RGB image if it exists
+        if frame.rgb_image_right is not None:
+            if hasattr(self, 'rgb_right_image_label'):
+                self.rgb_right_image_label.show()
+                self._update_image(self.rgb_right_image_label, frame.rgb_image_right, "RGB")
+        else:
+            if hasattr(self, 'rgb_right_image_label'):
+                self.rgb_right_image_label.hide()
+
+    def _update_image(self, label: QLabel, image: np.ndarray, image_type: str):
+        """Update the image label."""
+        if not isinstance(image, np.ndarray) or image.size == 0:
+            label.setText(f"Invalid {image_type} Frame")
+            return
+        
         try:
-            if not isinstance(frame.rgb_image, np.ndarray):
-                self.image_label.setText("Invalid Frame Type")
-                return
+            if image_type == "Depth":
+                # Normalize depth map for visualization
+                image = cv2.normalize(image, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+                image = cv2.applyColorMap(image, cv2.COLORMAP_JET)
 
-            rgb_image = frame.rgb_image
-            if rgb_image is None or rgb_image.size == 0:
-                self.image_label.setText("Empty Frame")
-                return
+            h, w, ch = image.shape
+            if ch == 4:
+                image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
+            elif ch == 3:
+                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-            # Debug: Print frame info for troubleshooting (only for first few frames)
-            if hasattr(self, '_frame_count'):
-                self._frame_count += 1
-            else:
-                self._frame_count = 1
-                print(f"First frame info for {self.camera_id_label.text()} - Shape: {rgb_image.shape}, dtype: {rgb_image.dtype}")
-
-            if len(rgb_image.shape) == 3 and rgb_image.shape[2] >= 3:
-                h, w = rgb_image.shape[:2]
-
-                # ZED cameras typically output BGR format, convert to RGB for Qt
-                if rgb_image.shape[2] == 4:  # BGRA format
-                    rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGRA2RGB)
-                elif rgb_image.shape[2] == 3:  # BGR format
-                    rgb_image = cv2.cvtColor(rgb_image, cv2.COLOR_BGR2RGB)
-
-                # Ensure the image is contiguous in memory
-                rgb_image = np.ascontiguousarray(rgb_image)
-
-                bytes_per_line = 3 * w
-                q_img = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format.Format_RGB888)
-                pixmap = QPixmap.fromImage(q_img)
-
-                if not pixmap.isNull():
-                    # Scale to fit the image label while maintaining aspect ratio
-                    label_size = self.image_label.size()
-                    if label_size.width() > 0 and label_size.height() > 0:
-                        scaled_pixmap = pixmap.scaled(
-                            label_size,
-                            Qt.AspectRatioMode.KeepAspectRatio,
-                            Qt.TransformationMode.SmoothTransformation
-                        )
-                        self.image_label.setPixmap(scaled_pixmap)
-                    else:
-                        # Fallback to a reasonable default size if label size is not available
-                        scaled_pixmap = pixmap.scaled(
-                            280, 160,
-                            Qt.AspectRatioMode.KeepAspectRatio,
-                            Qt.TransformationMode.SmoothTransformation
-                        )
-                        self.image_label.setPixmap(scaled_pixmap)
-                else:
-                    self.image_label.setText("Invalid Image")
-            else:
-                self.image_label.setText(f"Unsupported Format: {rgb_image.shape}")
-
+            q_img = QImage(image.data, w, h, ch * w, QImage.Format.Format_RGB888)
+            pixmap = QPixmap.fromImage(q_img)
+            label.setPixmap(pixmap.scaled(
+                label.size(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            ))
         except Exception as e:
-            print(f"Error updating frame for {self.camera_id_label.text()}: {e}")
-            self.image_label.setText("Display Error")
+            print(f"Error updating {image_type} frame for {self.camera_id_label.text()}: {e}")
+            label.setText("Display Error")
 
 class PreviewGrid(QWidget):
     """A grid of preview widgets that uses background threads for updates."""

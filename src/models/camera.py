@@ -1,5 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import numpy as np
+from typing import Optional
 
 @dataclass
 class Frame:
@@ -9,3 +10,4 @@ class Frame:
     timestamp_ns: int
     rgb_image: np.ndarray
     depth_image: np.ndarray
+    rgb_image_right: Optional[np.ndarray] = field(default=None)

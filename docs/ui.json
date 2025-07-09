@@ -1,0 +1,213 @@
+{
+  "project_info": {
+    "name": "Multi-Camera Data Collection Software (Light Theme)",
+    "description": "一个用于RealSense和ZED相机的简化版数据采集软件界面设计 (浅色主题)",
+    "version": "1.2.0",
+    "target_devices": [
+      "RealSense D435i",
+      "ZED 2i"
+    ],
+    "camera_count": {
+      "realsense": 4,
+      "zed": 1
+    }
+  },
+  "design_principles": {
+    "style": "Glassmorphism (玻璃拟态)",
+    "color_scheme": {
+      "primary": "#f8f9fa (浅灰色背景)",
+      "accent": "#28a745 (绿色状态指示)",
+      "warning": "#ffc107 (黄色警告)",
+      "error": "#dc3545 (红色错误)",
+      "text": "#212529 (深灰色文本)"
+    },
+    "visual_effects": [
+      "backdrop-filter: blur()",
+      "box-shadow with rgba",
+      "light panel backgrounds"
+    ]
+  },
+  "layout_structure": {
+    "main_container": {
+      "display": "flex",
+      "direction": "horizontal",
+      "height": "100vh",
+      "components": [
+        "main_content",
+        "sidebar"
+      ]
+    },
+    "main_content": {
+      "flex": 1,
+      "components": [
+        "header",
+        "camera_grid"
+      ],
+      "padding": "20px"
+    },
+    "sidebar": {
+      "width": "350px",
+      "components": [
+        "controls_panel",
+        "log_panel"
+      ],
+      "position": "right"
+    }
+  },
+  "camera_display_system": {
+    "camera_grid": {
+      "display": "grid",
+      "grid_template_columns": "repeat(2, 1fr)",
+      "grid_template_rows": "repeat(3, 1fr)",
+      "gap": "15px",
+      "camera_sections": [
+        {
+          "id": "realsense_1",
+          "title": "RealSense_140122071141",
+          "displays": ["RGB", "Depth"],
+          "size": "480*360"
+        },
+        {
+          "id": "realsense_2",
+          "title": "RealSense_213522070717",
+          "displays": ["RGB", "Depth"],
+          "size": "480*360"
+        },
+        {
+          "id": "realsense_3",
+          "title": "RealSense_315522070833",
+          "displays": ["RGB", "Depth"],
+          "size": "480*360"
+        },
+        {
+          "id": "realsense_4",
+          "title": "RealSense_425622070925",
+          "displays": ["RGB", "Depth"],
+          "size": "480*360"
+        },
+        {
+          "id": "zed_2i",
+          "title": "ZED_33334385",
+          "displays": ["RGB Left", "RGB Right", "Depth"],
+          "size": "480*360"
+        }
+      ]
+    },
+    "camera_section_structure": {
+      "components": ["camera_header", "camera_displays"],
+      "camera_header": {
+        "elements": ["camera_title", "connection_status"],
+        "status_indicator": {
+          "connected": "green dot",
+          "disconnected": "red dot"
+        }
+      },
+      "camera_displays": {
+        "layout": "horizontal flex",
+        "display_container": {
+          "components": ["display_label", "display_frame"],
+          "display_frame": {
+            "border_colors": {
+              "RGB": "#28a745",
+              "Depth": "#dc3545"
+            },
+            "overlays": ["frame_counter", "resolution_info"]
+          }
+        }
+      }
+    }
+  },
+  "control_panel_specification": {
+    "location": "right sidebar top",
+    "control_groups": [
+      {
+        "name": "lighting_level",
+        "type": "select",
+        "label": "光照等级",
+        "options": ["VeryDark", "Dark", "Normal", "Bright"],
+        "default": "Normal"
+      },
+      {
+        "name": "background_id",
+        "type": "text_input",
+        "label": "背景ID",
+        "default": "default_bg"
+      },
+      {
+        "name": "sequence_number",
+        "type": "number_input",
+        "label": "序列编号",
+        "default": 9
+      },
+      {
+        "name": "data_saving_settings",
+        "type": "checkbox_group",
+        "label": "数据保存设置",
+        "options": [
+          {"id": "save_rgb", "label": "保存RGB图像", "checked": true},
+          {"id": "save_depth", "label": "保存深度图像", "checked": true},
+          {"id": "save_pointcloud", "label": "保存点云", "checked": false},
+          {"id": "lock_metadata", "label": "锁定元数据", "checked": false}
+        ]
+      },
+      {
+        "name": "storage_path",
+        "type": "file_path",
+        "label": "存储路径",
+        "default": "/home/chen/Desktop/zhangjiahai/code/the-dataset",
+        "browse_button": true
+      }
+    ],
+    "action_buttons": [
+      {
+        "name": "capture",
+        "text": "采集",
+        "style": "primary"
+      }
+    ]
+  },
+  "log_system_specification": {
+    "location": "right sidebar bottom",
+    "title": "系统日志",
+    "display_properties": {
+      "font_family": "monospace",
+      "font_size": "11px",
+      "background": "#e9ecef",
+      "auto_scroll": true
+    },
+    "log_entry_types": {
+      "info": {"color": "#007bff"},
+      "warning": {"color": "#ffc107"},
+      "error": {"color": "#dc3545"},
+      "success": {"color": "#28a745"}
+    }
+  },
+  "interactive_features": {
+    "real_time_updates": [
+      {
+        "element": "frame_counter",
+        "frequency": "33ms (30fps)",
+        "format": "Frame: {number}"
+      },
+      {
+        "element": "log_entries",
+        "frequency": "event-driven",
+        "auto_scroll": true
+      }
+    ]
+  },
+  "technical_specifications": {
+    "framework": "Pure HTML/CSS/JavaScript",
+    "css_features": [
+      "CSS Grid for camera layout",
+      "Flexbox for component alignment",
+      "CSS backdrop-filter for glass effect",
+      "CSS custom properties for theming"
+    ],
+    "javascript_features": [
+      "Real-time frame counter simulation",
+      "Dynamic log entry management",
+      "Capture state management"
+    ]
+  }
+}

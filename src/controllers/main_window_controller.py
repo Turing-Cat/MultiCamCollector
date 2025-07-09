@@ -76,7 +76,7 @@ class MainWindowController(QObject):
     def _connect_signals(self):
         """Connect signals from the view to the controller's slots."""
         self.view.metadata_panel.capture_button.clicked.connect(self.on_capture)
-        self.view.metadata_panel.sequence_number_edit.textChanged.connect(
+        self.view.metadata_panel.sequence_number_edit.valueChanged.connect(
             self.on_sequence_changed
         )
         self.view.settings_panel.path_edit.textChanged.connect(self.on_storage_path_changed)
@@ -111,14 +111,9 @@ class MainWindowController(QObject):
         else:
             self.view.log_panel.add_log_message("Capture failed. No frames received.")
 
-    def on_sequence_changed(self, text: str):
+    def on_sequence_changed(self, value: int):
         """Handle the sequence number change."""
-        try:
-            new_seq = int(text)
-            self.sequence_counter.set_current(new_seq)
-        except ValueError:
-            # Ignore non-numeric input
-            pass
+        self.sequence_counter.set_current(value)
 
     def on_storage_path_changed(self, path: str):
         """Handle the storage path change."""
