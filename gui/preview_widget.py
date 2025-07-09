@@ -43,17 +43,18 @@ class PreviewWidget(QWidget):
 
     def __init__(self, camera_id: str):
         super().__init__()
-        self.setFixedSize(640, 480)
         
         layout = QVBoxLayout()
         self.setLayout(layout)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(2)
         
         self.camera_id_label = QLabel(camera_id)
         self.camera_id_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.camera_id_label)
         
         self.image_label = QLabel()
-        self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.image_label.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
         layout.addWidget(self.image_label, 1)
 
     def update_frame(self, frame):
@@ -124,14 +125,23 @@ class PreviewGrid(QWidget):
         layout = QGridLayout()
         self.setLayout(layout)
         layout.setContentsMargins(5, 5, 5, 5)
-        
+
         cameras = self.device_manager.get_all_cameras()
+        if not cameras:
+            return
+
+        # --- Layout Enhancement ---
+        # Keep the 3-column layout but make it responsive.
+        num_cols = 3
+        num_rows = (len(cameras) + num_cols - 1) // num_cols
+
         for i, camera in enumerate(cameras):
-            row, col = divmod(i, 3)
+            row, col = divmod(i, num_cols)
             preview = PreviewWidget(camera.camera_id)
             self.previews[camera.camera_id] = preview
             layout.addWidget(preview, row, col)
 
+            # --- Worker Thread Setup (same as before) ---
             thread = QThread()
             worker = FrameWorker(camera)
             self.workers[camera.camera_id] = worker
@@ -139,9 +149,16 @@ class PreviewGrid(QWidget):
 
             worker.frame_ready.connect(self.on_frame_ready)
             thread.started.connect(worker.run)
-            
+
             self.threads.append((thread, worker))
             thread.start()
+
+        # --- Add Stretch to Grid ---
+        # This ensures that the grid cells expand to fill available space.
+        for r in range(num_rows):
+            layout.setRowStretch(r, 1)
+        for c in range(num_cols):
+            layout.setColumnStretch(c, 1)
 
     def on_frame_ready(self, frame):
         """Slot to receive a frame and update the corresponding preview."""
