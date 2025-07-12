@@ -5,9 +5,11 @@ for easier importing.
 
 from .camera import Frame
 from .metadata import CaptureMetadata, LightingLevel
+from .settings import Settings
 
 __all__ = [
     "Frame",
     "CaptureMetadata",
     "LightingLevel",
+    "Settings",
 ]

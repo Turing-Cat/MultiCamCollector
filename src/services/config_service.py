@@ -36,6 +36,26 @@ class ConfigService:
         """Returns the ZED-specific settings dictionary."""
         return self._config.get("zed", {})
 
+    @property
+    def ui_settings(self) -> Dict[str, Any]:
+        """Returns the UI performance settings dictionary."""
+        return self._config.get("ui", {})
+
+    @property
+    def display_fps(self) -> int:
+        """Returns the UI display FPS limit."""
+        return int(self.ui_settings.get("display_fps", 15))
+
+    @property
+    def frame_timeout_ms(self) -> int:
+        """Returns the frame capture timeout in milliseconds."""
+        return int(self.ui_settings.get("frame_timeout_ms", 500))
+
+    @property
+    def thread_stop_timeout_ms(self) -> int:
+        """Returns the thread stop timeout in milliseconds."""
+        return int(self.ui_settings.get("thread_stop_timeout_ms", 2000))
+
     def get_full_config(self) -> Dict[str, Any]:
         """Returns the entire configuration dictionary."""
         return self._config

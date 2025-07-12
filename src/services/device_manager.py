@@ -1,23 +1,18 @@
 import pyrealsense2 as rs
 import pyzed.sl as sl
-from typing import List
+from typing import List, Dict, Any
 import platform
 import os
-from src.services.abstract_camera import AbstractCamera
-from src.services.realsense_camera import RealsenseCamera
-from src.services.zed_camera import ZedCamera
-from src.services.mock_camera import MockCamera
 from src.services.config_service import ConfigService
-
-import platform
-import time
+from src.services.camera_factory import CameraFactory
 
 class DeviceManager:
     """Manages the discovery and status of connected cameras."""
 
     def __init__(self, zed_sdk_path=None):
-        self._cameras: List[AbstractCamera] = []
+        self._camera_configs: List[Dict[str, Any]] = []
         self._config_service = ConfigService()
+        self.factory = CameraFactory()
         if zed_sdk_path:
             self._set_zed_sdk_path(zed_sdk_path)
 
@@ -29,88 +24,81 @@ class DeviceManager:
             pass
 
     def discover_cameras(self) -> None:
-        """Discover and connect to all available cameras."""
-        self._cameras = []
+        """Discover all available cameras and store their configurations."""
+        self._camera_configs = []
         self._discover_realsense_cameras()
         self._discover_zed_cameras()
 
-        if not self._cameras:
+        if not self._camera_configs:
             print("No real cameras found. Falling back to mock cameras.")
-            self._create_mock_cameras()
-
-        for camera in self._cameras:
-            try:
-                camera.connect()
-                time.sleep(2)  # Increased delay to prevent conflicts on Linux
-                # ZED camera connection status
-                if isinstance(camera, ZedCamera):
-                    print(f"ZED camera {camera.camera_id} connected")
-            except Exception as e:
-                print(f"Could not connect to camera {camera.camera_id}: {e}")
+            self._create_mock_camera_configs()
 
     def _discover_realsense_cameras(self):
-        """Discover and initialize RealSense cameras."""
+        """Discover and store configurations for RealSense cameras."""
         try:
             ctx = rs.context()
             devices = ctx.query_devices()
-            width, height = self._config_service.camera_resolution
-            fps = self._config_service.camera_fps
-            
-            for i, dev in enumerate(devices):
+            for dev in devices:
                 serial_number = dev.get_info(rs.camera_info.serial_number)
                 camera_id = f"RealSense_{serial_number}"
-                camera = RealsenseCamera(
-                    camera_id=camera_id, 
-                    serial_number=serial_number,
-                    width=width,
-                    height=height,
-                    fps=fps
-                )
-                self._cameras.append(camera)
+                width, height = self._config_service.camera_resolution
+                camera_config = {
+                    "width": width,
+                    "height": height,
+                    "fps": self._config_service.camera_fps
+                }
+                
+                self._camera_configs.append({
+                    "camera_id": camera_id,
+                    "type": "realsense",
+                    "device_info": {"serial_number": serial_number},
+                    "config": camera_config
+                })
                 print(f"Found RealSense camera: {camera_id}")
         except Exception as e:
             print(f"Error discovering RealSense cameras: {e}")
 
     def _discover_zed_cameras(self):
-        """Discover and initialize ZED cameras."""
+        """Discover and store configurations for ZED cameras."""
         try:
             zed_list = sl.Camera.get_device_list()
-            width, height = self._config_service.camera_resolution
-            fps = self._config_service.camera_fps
-            zed_settings = self._config_service.zed_settings
-
-            for i, zed_info in enumerate(zed_list):
+            for zed_info in zed_list:
                 serial_number = str(zed_info.serial_number)
                 camera_id = f"ZED_{serial_number}"
-                camera = ZedCamera(
-                    camera_id=camera_id, 
-                    serial_number=serial_number,
-                    resolution_wh=(width, height),
-                    fps=fps,
-                    zed_config=zed_settings
-                )
-                self._cameras.append(camera)
+                width, height = self._config_service.camera_resolution
+                camera_config = {
+                    "width": width,
+                    "height": height,
+                    "fps": self._config_service.camera_fps
+                }
+                camera_config.update(self._config_service.zed_settings)
+
+                self._camera_configs.append({
+                    "camera_id": camera_id,
+                    "type": "zed",
+                    "device_info": {"serial_number": serial_number},
+                    "config": camera_config
+                })
                 print(f"Found ZED camera: {camera_id}")
         except Exception as e:
             print(f"Error discovering ZED cameras: {e}")
 
-    def _create_mock_cameras(self):
-        """Create mock cameras for development when no real cameras are found."""
-        self._cameras = [
-            MockCamera(camera_id="D435i_1", model="D435i"),
-            MockCamera(camera_id="D435i_2", model="D435i"),
-            MockCamera(camera_id="D435i_3", model="D435i"),
-            MockCamera(camera_id="D435i_4", model="D435i")
-        ]
+    def _create_mock_camera_configs(self):
+        """Create mock camera configurations for development."""
+        print("Creating mock camera configuration.")
+        width, height = self._config_service.camera_resolution
+        mock_config = {
+            "camera_id": "Mock_1",
+            "type": "mock",
+            "device_info": {"serial_number": "MOCK_SN_1"},
+            "config": {
+                "resolution": (width, height),
+                "fps": self._config_service.camera_fps
+            }
+        }
+        self._camera_configs.append(mock_config)
 
-    def get_all_cameras(self) -> List[AbstractCamera]:
-        """Get a list of all discovered cameras."""
-        return self._cameras
-
-    def get_camera_by_id(self, camera_id: str) -> AbstractCamera:
-        """Get a camera by its ID."""
-        for camera in self._cameras:
-            if camera.camera_id == camera_id:
-                return camera
-        raise ValueError(f"Camera with ID {camera_id} not found.")
+    def get_all_camera_configs(self) -> List[Dict[str, Any]]:
+        """Get a list of all discovered camera configurations."""
+        return self._camera_configs
 

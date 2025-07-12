@@ -5,6 +5,12 @@ exposure:
   d435i: 150
   zed2i: 100
 
+# UI Performance Settings
+ui:
+  display_fps: 15           # Limit UI updates to improve responsiveness
+  frame_timeout_ms: 500     # Timeout for frame capture (Linux optimization)
+  thread_stop_timeout_ms: 2000  # Timeout for thread stopping
+
 # ZED Camera Settings
 zed:
   enable_self_calibration: false  # Set to true to enable self-calibration on startup

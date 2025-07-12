@@ -1,0 +1,146 @@
+/* Chrome-like Light Theme */
+
+QWidget {
+    font-family: "Segoe UI", "Arial", sans-serif;
+    font-size: 10pt;
+    color: #202124; /* Google's primary text color */
+}
+
+QMainWindow {
+    background-color: #f1f3f4; /* Chrome's background color */
+}
+
+/* Main Layout & Containers */
+#main_container, #left_panel, #right_panel, #scrollArea, #scrollAreaWidgetContents {
+    background: transparent;
+    border: none;
+}
+
+#controls_container, #log_container {
+    background-color: #ffffff;
+    border-radius: 8px;
+    border: 1px solid #dadce0; /* Subtle border */
+}
+
+/* GroupBox for controls */
+QGroupBox {
+    font-weight: bold;
+    color: #202124;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+    margin-top: 1ex;
+    padding: 15px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top left;
+    padding: 0 5px;
+    background-color: #f1f3f4;
+    border-radius: 4px;
+}
+
+/* Preview Widget */
+QWidget[class="camera-section"] {
+    background-color: #ffffff;
+    border: 1px solid #dadce0;
+    border-radius: 8px;
+}
+
+QLabel[class="camera-title"] {
+    font-size: 12px;
+    font-weight: 600;
+    color: #3c4043;
+}
+
+QLabel[class="camera-status"] {
+    font-size: 11px;
+    color: #1e8e3e; /* Green for connected */
+}
+
+QLabel[class="status-dot-connected"] {
+    background-color: #1e8e3e;
+    border-radius: 6px;
+    min-width: 12px;
+    min-height: 12px;
+}
+
+QLabel[class="status-dot-disconnected"] {
+    background-color: #d93025; /* Red for disconnected */
+    border-radius: 6px;
+    min-width: 12px;
+    min-height: 12px;
+}
+
+QLabel[class="display-label"] {
+    font-size: 10px;
+    color: #5f6368;
+    qproperty-alignment: 'AlignCenter';
+}
+
+QFrame[class="display-frame"] {
+    background-color: #e8eaed;
+    border: 1px solid #d2d5d8;
+    border-radius: 4px;
+}
+
+/* Input Controls */
+QLabel {
+    color: #3c4043;
+    font-size: 10pt;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+QLineEdit, QSpinBox {
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 6px;
+    background-color: #ffffff;
+    color: #202124;
+}
+
+QLineEdit:focus, QSpinBox:focus {
+    border-color: #1a73e8; /* Google Blue */
+}
+
+QCheckBox {
+    spacing: 5px;
+    color: #3c4043;
+}
+
+/* Buttons */
+QPushButton {
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-weight: 600;
+    border: 1px solid transparent;
+}
+
+QPushButton#capture_button {
+    background-color: #1a73e8;
+    color: white;
+}
+
+QPushButton#capture_button:hover {
+    background-color: #287ae6;
+}
+
+QPushButton#browse_button {
+    background-color: #ffffff;
+    color: #1a73e8;
+    border: 1px solid #dadce0;
+}
+
+QPushButton#browse_button:hover {
+    background-color: #f8f9fa;
+}
+
+/* Log Panel */
+QTextEdit#log_text_edit {
+    background-color: #ffffff;
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    font-family: "Consolas", "Monaco", monospace;
+    color: #3c4043;
+}

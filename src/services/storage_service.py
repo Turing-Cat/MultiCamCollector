@@ -7,6 +7,7 @@ import numpy as np
 
 from src.models.camera import Frame
 from src.models.metadata import CaptureMetadata
+from src.models.settings import Settings
 
 class StorageService:
     """Handles saving captured frames and metadata to disk."""
@@ -14,12 +15,16 @@ class StorageService:
     def __init__(self, root_dir: str):
         self.set_root_dir(root_dir)
 
+    def get_root_dir(self) -> str:
+        """Return the root directory for saving data."""
+        return self._root_dir
+
     def set_root_dir(self, root_dir: str):
         """Set the root directory for saving data."""
         self._root_dir = root_dir
         os.makedirs(self._root_dir, exist_ok=True)
 
-    def save(self, frames: List[Frame], metadata: CaptureMetadata, settings: Dict[str, Any]) -> str:
+    def save(self, frames: List[Frame], metadata: CaptureMetadata, settings: Settings) -> str:
         """Save frames and metadata, then return the session directory."""
         session_dir = self._create_session_directory(metadata)
 
@@ -29,22 +34,33 @@ class StorageService:
             json.dump(metadata.to_dict(), f, indent=4, ensure_ascii=False)
 
         # Save frames
-        timestamp_str = datetime.now().strftime("%Y%m%dT%H%M%S%f")[:-3]  # Milliseconds
         for frame in frames:
-            if settings.get("save_rgb", False):
-                rgb_filename = f"{timestamp_str}_{frame.camera_id}_RGB.png"
+            # Generate a unique timestamp for each frame to prevent filename collisions
+            timestamp_str = datetime.now().strftime("%Y%m%dT%H%M%S%f")[:-3]
+            base_filename = f"{timestamp_str}_{frame.camera_id}_frame_{frame.frame_number:04d}"
+
+            if settings.save_rgb:
+                rgb_filename = f"{base_filename}_RGB.png"
                 rgb_path = os.path.join(session_dir, rgb_filename)
                 self._save_image_unicode(rgb_path, frame.rgb_image)
 
-            if settings.get("save_depth", False):
-                depth_filename = f"{timestamp_str}_{frame.camera_id}_Depth.tiff"
+            if settings.save_depth and frame.depth_image is not None:
+                depth_filename = f"{base_filename}_Depth.tiff"
                 depth_path = os.path.join(session_dir, depth_filename)
-                # Handle potential NaN/inf values in depth data before casting
-                safe_depth_image = np.nan_to_num(frame.depth_image, nan=0.0, posinf=0.0, neginf=0.0)
-                self._save_image_unicode(depth_path, safe_depth_image.astype("uint16"))
+                
+                # Handle potential NaN/inf values
+                safe_depth = np.nan_to_num(frame.depth_image, nan=0.0, posinf=0.0, neginf=0.0)
+                
+                # If the depth image is float, assume it's in meters and convert to uint16 millimeters
+                if np.issubdtype(safe_depth.dtype, np.floating):
+                    depth_mm = np.clip(safe_depth * 1000, 0, 65535).astype("uint16")
+                else:
+                    depth_mm = safe_depth.astype("uint16")
+                    
+                self._save_image_unicode(depth_path, depth_mm)
 
-            if settings.get("save_point_cloud", False):
-                pc_filename = f"{timestamp_str}_{frame.camera_id}_PC.ply"
+            if settings.save_point_cloud:
+                pc_filename = f"{base_filename}_PC.ply"
                 pc_path = os.path.join(session_dir, pc_filename)
                 self._save_placeholder_ply(pc_path)
 

@@ -1,6 +1,6 @@
 import time
 import numpy as np
-from typing import Iterator
+from typing import Iterator, Dict, Any
 from src.services.abstract_camera import AbstractCamera
 from src.models.camera import Frame
 import cv2
@@ -8,11 +8,17 @@ import cv2
 class MockCamera(AbstractCamera):
     """A mock camera for testing purposes with enhanced simulation capabilities."""
 
-    def __init__(self, camera_id: str, model: str = "D435i"):
+    def __init__(self, camera_id: str, model: str = "D435i", config: Dict[str, Any] = None):
         self._camera_id = camera_id
         self._model = model
         self._is_connected = False
-        self._resolution = self._get_resolution()
+        if config:
+            self._resolution = config.get("resolution", (1280, 720))
+            self._fps = config.get("fps", 30)
+        else:
+            self._resolution = (1280, 720)
+            self._fps = 30
+        self._frame_number = 0
 
     def _get_resolution(self) -> tuple:
         """Get resolution based on camera model."""
@@ -47,13 +53,16 @@ class MockCamera(AbstractCamera):
         if not self._is_connected:
             raise ConnectionError(f"Camera {self._camera_id} is not connected.")
         
-        return Frame(
+        frame = Frame(
             camera_id=self._camera_id,
-            sequence_id=int(time.time()),
+            frame_number=self._frame_number,
             timestamp_ns=time.time_ns(),
             rgb_image=self._generate_mock_image(),
             depth_image=np.random.randint(0, 1000, self._resolution, dtype=np.uint16),
+            sequence_id=int(time.time()),
         )
+        self._frame_number += 1
+        return frame
 
     def stream(self) -> Iterator[Frame]:
         """Simulate streaming frames."""
@@ -87,3 +96,8 @@ class MockCamera(AbstractCamera):
     def model(self) -> str:
         """Get the camera model."""
         return self._model
+    
+    @property
+    def fps(self) -> float:
+        """Get the frame rate for the camera."""
+        return 30.0  # Default FPS for mock camera
