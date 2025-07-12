@@ -18,7 +18,8 @@ class ConfigService:
     @property
     def camera_resolution(self) -> Tuple[int, int]:
         """Returns the camera resolution as a (width, height) tuple."""
-        res_str = self._config.get("camera_resolution", "640x480")
+        camera_settings = self._config.get("camera_settings", {})
+        res_str = camera_settings.get("resolution", "640x480")
         try:
             width, height = map(int, res_str.split('x'))
             return width, height
@@ -29,12 +30,14 @@ class ConfigService:
     @property
     def camera_fps(self) -> int:
         """Returns the camera frames per second."""
-        return int(self._config.get("camera_fps", 30))
+        camera_settings = self._config.get("camera_settings", {})
+        return int(camera_settings.get("fps", 30))
 
     @property
     def zed_settings(self) -> Dict[str, Any]:
         """Returns the ZED-specific settings dictionary."""
-        return self._config.get("zed", {})
+        camera_settings = self._config.get("camera_settings", {})
+        return camera_settings.get("zed", {})
 
     @property
     def ui_settings(self) -> Dict[str, Any]:

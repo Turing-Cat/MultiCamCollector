@@ -1,27 +1,15 @@
-# Camera Settings
-camera_resolution: "1280x720"
-camera_fps: 30
-exposure:
-  d435i: 150
-  zed2i: 100
+# Camera Hardware Settings
+camera_settings:
+  resolution: "1280x720"
+  fps: 30
+  zed:
+    enable_self_calibration: false  # Set to true to enable self-calibration on startup
+    depth_mode: "PERFORMANCE"       # Options: PERFORMANCE, QUALITY, ULTRA, NEURAL
+    depth_stabilization: true
+    depth_minimum_distance: 200     # Minimum depth distance in mm
 
 # UI Performance Settings
 ui:
   display_fps: 15           # Limit UI updates to improve responsiveness
   frame_timeout_ms: 500     # Timeout for frame capture (Linux optimization)
   thread_stop_timeout_ms: 2000  # Timeout for thread stopping
-
-# ZED Camera Settings
-zed:
-  enable_self_calibration: false  # Set to true to enable self-calibration on startup
-  depth_mode: "PERFORMANCE"       # Options: PERFORMANCE, QUALITY, ULTRA, NEURAL
-  depth_stabilization: true
-  depth_minimum_distance: 200     # Minimum depth distance in mm
-
-# Storage Settings
-dataset_root_dir: "../the-dataset"
-directory_format: "{date}/{lighting}/{background_id}"
-
-# Logging
-log_level: "INFO"
-log_file: "multicam_collector.log"

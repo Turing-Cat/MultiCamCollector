@@ -72,7 +72,8 @@ class RealsenseCamera(AbstractCamera):
         except RuntimeError as e:
             # RealSense SDK throws RuntimeError for timeouts and other issues
             # Don't print every timeout to reduce log spam
-            if "timeout" not in str(e).lower():
+            error_msg = str(e).lower()
+            if "timeout" not in error_msg and "didn't arrive within" not in error_msg:
                 print(f"[{self._camera_id}] wait_for_frames() failed: {e}")
             return None
         except Exception as e:
