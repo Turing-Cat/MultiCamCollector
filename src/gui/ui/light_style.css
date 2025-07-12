@@ -92,7 +92,7 @@ QLabel {
     margin-bottom: 4px;
 }
 
-QLineEdit, QSpinBox {
+QLineEdit, QSpinBox, QComboBox {
     border: 1px solid #dadce0;
     border-radius: 4px;
     padding: 6px;
@@ -100,8 +100,20 @@ QLineEdit, QSpinBox {
     color: #202124;
 }
 
-QLineEdit:focus, QSpinBox:focus {
+QLineEdit:focus, QSpinBox:focus, QComboBox:focus {
     border-color: #1a73e8; /* Google Blue */
+}
+
+/* QComboBox uses native styling to preserve system arrow */
+QComboBox {
+    /* Only basic styling to maintain consistency */
+}
+
+QComboBox QAbstractItemView {
+    border: 1px solid #dadce0;
+    background-color: #ffffff;
+    outline: none;
+    selection-background-color: #e8f0fe;
 }
 
 QCheckBox {

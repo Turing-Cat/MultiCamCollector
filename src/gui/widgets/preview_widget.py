@@ -108,6 +108,7 @@ class PreviewWidget(QWidget):
         super().__init__()
         self.camera_id = camera_id
         self.project_root = project_root
+        self.depth_alpha = 0.08  # Store alpha for smoothing
 
         # Load the UI file
         ui_file = os.path.join(self.project_root, "src", "gui", "ui", "preview_widget.ui")
@@ -193,19 +194,12 @@ class PreviewWidget(QWidget):
             image_copy = image if image.flags.c_contiguous else image.copy()
 
             if is_depth:
-                # Use a fixed depth range (e.g., 0-4000mm) for stable normalization
-                depth_min, depth_max = 0, 4000
-                # Handle invalid values (NaN, inf) before normalization
-                valid_mask = np.isfinite(image_copy)
-                image_copy = np.where(valid_mask, image_copy, 0)
-                # Normalize to 0-255 for colormap
-                normalized_depth = np.clip(image_copy, depth_min, depth_max)
-                normalized_depth = (normalized_depth - depth_min) * (255 / (depth_max - depth_min))
-                # Ensure no invalid values before casting
-                normalized_depth = np.nan_to_num(normalized_depth, nan=0.0, posinf=255.0, neginf=0.0)
-                # Use in-place operations where possible
-                depth_uint8 = normalized_depth.astype(np.uint8)
+                # Use fixed alpha for stable visualization (like the simple example)
+                # Avoid dynamic alpha to prevent flickering
+                depth_uint8 = cv2.convertScaleAbs(image_copy, alpha=0.03)
                 image_copy = cv2.applyColorMap(depth_uint8, cv2.COLORMAP_JET)
+                # Convert BGR to RGB for Qt display
+                image_copy = cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB)
 
             label_w, label_h = label.width(), label.height()
             # --- Key Fix: Prevent 0-size dimensions from being passed to cv2.resize() ---
