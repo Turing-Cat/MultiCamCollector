@@ -11,5 +11,4 @@ class Frame:
     rgb_image: np.ndarray
     depth_image: np.ndarray
     rgb_image_left: Optional[np.ndarray] = field(default=None)
-    rgb_image_right: Optional[np.ndarray] = field(default=None)
     sequence_id: int = 0 # Add default for backward compatibility if needed

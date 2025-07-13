@@ -28,7 +28,6 @@ class ZedCamera(AbstractCamera):
         self._zed = None
         self._init_params = None
         self._image_sl = None
-        self._image_right_sl = None
         self._depth_sl = None
         self._is_connected = False
         self._sequence_id = 0
@@ -63,7 +62,6 @@ class ZedCamera(AbstractCamera):
         width = cam_info.camera_configuration.resolution.width
         height = cam_info.camera_configuration.resolution.height
         self._image_sl = sl.Mat(width, height, sl.MAT_TYPE.U8_C4)
-        self._image_right_sl = sl.Mat(width, height, sl.MAT_TYPE.U8_C4)
         self._depth_sl = sl.Mat(width, height, sl.MAT_TYPE.F32_C1)
         
         self._is_connected = True
@@ -85,7 +83,6 @@ class ZedCamera(AbstractCamera):
             if status == sl.ERROR_CODE.SUCCESS:
                 # A new image is available
                 rgb_image = None
-                rgb_image_right = None
                 depth_image = None
                 
                 # Retrieve left image
@@ -97,16 +94,6 @@ class ZedCamera(AbstractCamera):
                 except Exception as e:
                     print(f"Error retrieving left image: {e}")
                     rgb_image = None
-
-                # Retrieve right image
-                try:
-                    if self._zed.retrieve_image(self._image_right_sl, sl.VIEW.RIGHT) == sl.ERROR_CODE.SUCCESS:
-                        data_right = self._image_right_sl.get_data()
-                        if data_right is not None and data_right.size > 0:
-                            rgb_image_right = cv2.cvtColor(data_right, cv2.COLOR_BGRA2RGB)
-                except Exception as e:
-                    print(f"Error retrieving right image: {e}")
-                    rgb_image_right = None
 
                 # Retrieve depth image
                 try:
@@ -127,7 +114,6 @@ class ZedCamera(AbstractCamera):
                     timestamp_ns=time.time_ns(),
                     rgb_image=rgb_image,
                     rgb_image_left=rgb_image,
-                    rgb_image_right=rgb_image_right,
                     depth_image=depth_image
                 )
                 self._sequence_id += 1

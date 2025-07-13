@@ -121,9 +121,10 @@ class PreviewWidget(QWidget):
         self.camera_title.setText(camera_id)
         
         self.display_widgets = []
-        display_types = ["RGB", "Depth"]
         if "ZED" in camera_id:
-            display_types = ["RGB Left", "RGB Right", "Depth"]
+            display_types = ["RGB Left", "Depth"]
+        else:
+            display_types = ["RGB", "Depth"]
 
         for display_type in display_types:
             display_widget = self.create_display_widget(display_type)
@@ -163,8 +164,6 @@ class PreviewWidget(QWidget):
             if "ZED" in frame.camera_id:
                 if hasattr(self, 'rgb_left_label') and hasattr(frame, 'rgb_image_left') and frame.rgb_image_left is not None:
                     self._update_image(self.rgb_left_label, frame.rgb_image_left)
-                if hasattr(self, 'rgb_right_label') and hasattr(frame, 'rgb_image_right') and frame.rgb_image_right is not None:
-                    self._update_image(self.rgb_right_label, frame.rgb_image_right)
                 if hasattr(self, 'depth_label') and hasattr(frame, 'depth_image') and frame.depth_image is not None:
                     self._update_image(self.depth_label, frame.depth_image, is_depth=True)
             else:
@@ -177,8 +176,6 @@ class PreviewWidget(QWidget):
             # Set error text on available labels
             if hasattr(self, 'rgb_left_label'):
                 self.rgb_left_label.setText("Display Error")
-            if hasattr(self, 'rgb_right_label'):
-                self.rgb_right_label.setText("Display Error")
             if hasattr(self, 'rgb_label'):
                 self.rgb_label.setText("Display Error")
             if hasattr(self, 'depth_label'):

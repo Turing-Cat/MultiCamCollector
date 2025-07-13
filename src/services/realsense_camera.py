@@ -121,8 +121,7 @@ class RealsenseCamera(AbstractCamera):
                 frame_number=self._sequence_id,
                 timestamp_ns=timestamp_ns,
                 rgb_image=rgb_image,
-                depth_image=depth_image,
-                rgb_image_right=None
+                depth_image=depth_image
             )
             self._sequence_id += 1
             return frame
