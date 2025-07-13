@@ -81,7 +81,8 @@ class ZedCamera(AbstractCamera):
 
         runtime_params = sl.RuntimeParameters()
         try:
-            if self._zed.grab(runtime_params) == sl.ERROR_CODE.SUCCESS:
+            status = self._zed.grab(runtime_params)
+            if status == sl.ERROR_CODE.SUCCESS:
                 # A new image is available
                 rgb_image = None
                 rgb_image_right = None
@@ -92,8 +93,7 @@ class ZedCamera(AbstractCamera):
                     if self._zed.retrieve_image(self._image_sl, sl.VIEW.LEFT) == sl.ERROR_CODE.SUCCESS:
                         data_left = self._image_sl.get_data()
                         if data_left is not None and data_left.size > 0:
-                            bgr_left = data_left[:, :, :3]
-                            rgb_image = cv2.cvtColor(bgr_left, cv2.COLOR_BGR2RGB)
+                            rgb_image = cv2.cvtColor(data_left, cv2.COLOR_BGRA2RGB)
                 except Exception as e:
                     print(f"Error retrieving left image: {e}")
                     rgb_image = None
@@ -103,8 +103,7 @@ class ZedCamera(AbstractCamera):
                     if self._zed.retrieve_image(self._image_right_sl, sl.VIEW.RIGHT) == sl.ERROR_CODE.SUCCESS:
                         data_right = self._image_right_sl.get_data()
                         if data_right is not None and data_right.size > 0:
-                            bgr_right = data_right[:, :, :3]
-                            rgb_image_right = cv2.cvtColor(bgr_right, cv2.COLOR_BGR2RGB)
+                            rgb_image_right = cv2.cvtColor(data_right, cv2.COLOR_BGRA2RGB)
                 except Exception as e:
                     print(f"Error retrieving right image: {e}")
                     rgb_image_right = None
@@ -114,7 +113,10 @@ class ZedCamera(AbstractCamera):
                     if self._zed.retrieve_measure(self._depth_sl, sl.MEASURE.DEPTH) == sl.ERROR_CODE.SUCCESS:
                         depth_data = self._depth_sl.get_data()
                         if depth_data is not None and depth_data.size > 0:
-                            depth_image = depth_data.copy()
+                            # Replace nan and inf with 0 for stable processing
+                            np.nan_to_num(depth_data, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
+                            # Clip to a practical range (e.g., 0.2m to 10m) for visualization consistency
+                            depth_image = np.clip(depth_data, 0.2, 10.0)
                 except Exception as e:
                     print(f"Error retrieving depth image: {e}")
                     depth_image = None
@@ -130,9 +132,18 @@ class ZedCamera(AbstractCamera):
                 )
                 self._sequence_id += 1
                 return frame
-            return None
+            
+            elif status == sl.ERROR_CODE.NOT_A_NEW_FRAME:
+                # This is a common, non-critical error. Silently return None.
+                return None
+            
+            else:
+                # A more serious error occurred.
+                print(f"Critical ZED grab error in capture_frame(): {status}")
+                return None
+
         except Exception as e:
-            print(f"Error in ZedCamera.capture_frame(): {e}")
+            print(f"Unhandled exception in ZedCamera.capture_frame(): {e}")
             return None
 
     def stream(self) -> Iterator[Frame]:
