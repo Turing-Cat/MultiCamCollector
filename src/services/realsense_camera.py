@@ -106,7 +106,7 @@ class RealsenseCamera(AbstractCamera):
             try:
                 depth_data = np.asanyarray(depth_frame.get_data())
                 if depth_data is not None and depth_data.size > 0:
-                    depth_image = np.clip(depth_data.copy(), 0, 4000) # 固定深度范围
+                    depth_image = depth_data.copy() # 固定深度范围
             except Exception as e:
                 print(f"Error converting depth image for {self._camera_id}: {e}")
                 depth_image = None
