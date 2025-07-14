@@ -34,12 +34,6 @@ class ConfigService:
         return int(camera_settings.get("fps", 30))
 
     @property
-    def zed_settings(self) -> Dict[str, Any]:
-        """Returns the ZED-specific settings dictionary."""
-        camera_settings = self._config.get("camera_settings", {})
-        return camera_settings.get("zed", {})
-
-    @property
     def ui_settings(self) -> Dict[str, Any]:
         """Returns the UI performance settings dictionary."""
         return self._config.get("ui", {})

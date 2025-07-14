@@ -64,15 +64,14 @@ class FrameWorker(QObject):
                                 self.frame_ready.emit(frame)
                                 self._last_emit_time = current_time
                     
-                    # Frame-rate limiting sleep. The ZED grab call is blocking, so no sleep is needed.
-                    if "ZED" not in self.camera.camera_id:
-                        try:
-                            # Use more efficient sleep timing for Linux
-                            sleep_time = max(0.001, 1 / self.camera.fps if self.camera.fps > 0 else 0.03)
-                            time.sleep(sleep_time)
-                        except Exception as sleep_error:
-                            print(f"Sleep error in FrameWorker for {self.camera.camera_id}: {sleep_error}")
-                            break
+                    # Frame-rate limiting sleep
+                    try:
+                        # Use more efficient sleep timing for Linux
+                        sleep_time = max(0.001, 1 / self.camera.fps if self.camera.fps > 0 else 0.03)
+                        time.sleep(sleep_time)
+                    except Exception as sleep_error:
+                        print(f"Sleep error in FrameWorker for {self.camera.camera_id}: {sleep_error}")
+                        break
                 except Exception as e:
                     print(f"Error in FrameWorker for {self.camera.camera_id}: {e}")
                     try:
@@ -121,10 +120,7 @@ class PreviewWidget(QWidget):
         self.camera_title.setText(camera_id)
         
         self.display_widgets = []
-        if "ZED" in camera_id:
-            display_types = ["RGB Left", "Depth"]
-        else:
-            display_types = ["RGB", "Depth"]
+        display_types = ["RGB", "Depth"]
 
         for display_type in display_types:
             display_widget = self.create_display_widget(display_type)
@@ -161,21 +157,13 @@ class PreviewWidget(QWidget):
         self.frame_number = frame.frame_number
 
         try:
-            if "ZED" in frame.camera_id:
-                if hasattr(self, 'rgb_left_label') and hasattr(frame, 'rgb_image_left') and frame.rgb_image_left is not None:
-                    self._update_image(self.rgb_left_label, frame.rgb_image_left)
-                if hasattr(self, 'depth_label') and hasattr(frame, 'depth_image') and frame.depth_image is not None:
-                    self._update_image(self.depth_label, frame.depth_image, is_depth=True)
-            else:
-                if hasattr(self, 'rgb_label') and hasattr(frame, 'rgb_image') and frame.rgb_image is not None:
-                    self._update_image(self.rgb_label, frame.rgb_image)
-                if hasattr(self, 'depth_label') and hasattr(frame, 'depth_image') and frame.depth_image is not None:
-                    self._update_image(self.depth_label, frame.depth_image, is_depth=True)
+            if hasattr(self, 'rgb_label') and hasattr(frame, 'rgb_image') and frame.rgb_image is not None:
+                self._update_image(self.rgb_label, frame.rgb_image)
+            if hasattr(self, 'depth_label') and hasattr(frame, 'depth_image') and frame.depth_image is not None:
+                self._update_image(self.depth_label, frame.depth_image, is_depth=True)
         except Exception as e:
             print(f"Error updating frame for {self.camera_id}: {e}")
             # Set error text on available labels
-            if hasattr(self, 'rgb_left_label'):
-                self.rgb_left_label.setText("Display Error")
             if hasattr(self, 'rgb_label'):
                 self.rgb_label.setText("Display Error")
             if hasattr(self, 'depth_label'):
@@ -270,26 +258,20 @@ class PreviewGrid(QWidget):
         self.setLayout(grid_layout)
 
         camera_configs = self.device_manager.get_all_camera_configs()
-        realsense_configs = sorted([c for c in camera_configs if "ZED" not in c['camera_id']], key=lambda cam: cam['camera_id'])
-        zed_configs = [c for c in camera_configs if "ZED" in c['camera_id']]
 
-        # Define the grid positions for RealSense cameras
-        realsense_positions = [(0, 0), (0, 1), (1, 0), (1, 1)]
+        # Define grid positions, e.g., 2 columns
+        num_columns = 2
+        positions = [(r, c) for r in range((len(camera_configs) + num_columns - 1) // num_columns) for c in range(num_columns)]
 
-        # Place up to 4 RealSense cameras in their designated slots
-        for i, cam_config in enumerate(realsense_configs[:4]):
-            row, col = realsense_positions[i]
-            self._setup_camera_preview(cam_config, grid_layout, row, col)
-
-        # Place the ZED camera if it exists, in its designated slot
-        if zed_configs:
-            # The ZED camera is placed on the third row, spanning two columns
-            self._setup_camera_preview(zed_configs[0], grid_layout, 2, 0, 1, 2)
+        for i, cam_config in enumerate(camera_configs):
+            if i < len(positions):
+                row, col = positions[i]
+                self._setup_camera_preview(cam_config, grid_layout, row, col)
 
         # Set stretch factors for columns and rows
-        for i in range(2):
+        for i in range(num_columns):
             grid_layout.setColumnStretch(i, 1)
-        for i in range(3):
+        for i in range((len(camera_configs) + num_columns - 1) // num_columns):
             grid_layout.setRowStretch(i, 1)
 
     def _setup_camera_preview(self, cam_config, layout, row, col, rowspan=1, colspan=1):

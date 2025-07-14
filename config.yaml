@@ -2,11 +2,6 @@
 camera_settings:
   resolution: "1280x720"
   fps: 30
-  zed:
-    enable_self_calibration: false  # Set to true to enable self-calibration on startup
-    depth_mode: "PERFORMANCE"       # Options: PERFORMANCE, QUALITY, ULTRA, NEURAL
-    depth_stabilization: true
-    depth_minimum_distance: 200     # Minimum depth distance in mm
 
 # UI Performance Settings
 ui:

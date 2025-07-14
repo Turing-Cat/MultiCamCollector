@@ -11,7 +11,6 @@ from .config_service import ConfigService
 from .abstract_camera import AbstractCamera
 from .mock_camera import MockCamera
 from .realsense_camera import RealsenseCamera
-from .zed_camera import ZedCamera
 
 __all__ = [
     "DeviceManager",
@@ -22,5 +21,4 @@ __all__ = [
     "AbstractCamera",
     "MockCamera",
     "RealsenseCamera",
-    "ZedCamera",
 ]

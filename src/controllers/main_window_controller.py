@@ -16,15 +16,6 @@ from src.services import (
 from src.models import CaptureMetadata, Settings, LightingLevel
 
 
-def get_zed_sdk_path() -> Union[str, None]:
-    """Return ZED SDK installation path based on the platform."""
-    if platform.system() == "Windows":
-        return os.environ.get("ZED_SDK_ROOT_DIR", "C:/Program Files (x86)/ZED SDK")
-    if platform.system() == "Linux":
-        return os.environ.get("ZED_SDK_ROOT_DIR", "/usr/local/zed")
-    return None
-
-
 class CameraSettingsWorker(QObject):
     """Worker to apply camera settings in a separate thread."""
 

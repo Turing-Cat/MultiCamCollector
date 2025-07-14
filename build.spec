@@ -14,8 +14,7 @@ a = Analysis(
     ],
     hiddenimports=[
         'services.device_manager',
-        'devices.realsense_camera',
-        'devices.zed_camera'
+        'devices.realsense_camera'
     ],
     hookconfig={},
     hooksconfig={},

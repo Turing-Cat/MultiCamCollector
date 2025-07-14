@@ -2,7 +2,6 @@ from typing import Dict, Any, Tuple
 
 from src.services.abstract_camera import AbstractCamera
 from src.services.realsense_camera import RealsenseCamera
-from src.services.zed_camera import ZedCamera
 from src.services.mock_camera import MockCamera
 
 
@@ -44,14 +43,6 @@ class CameraFactory:
                 serial_number=device_info['serial_number'],
                 resolution_wh=resolution,
                 fps=fps
-            )
-        elif camera_type == 'zed':
-            return ZedCamera(
-                camera_id=camera_id,
-                serial_number=device_info['serial_number'],
-                resolution_wh=resolution,
-                fps=fps,
-                zed_config=camera_config.get('zed_config', {})
             )
         else:
             raise ValueError(f"Unknown camera type: {camera_type}")

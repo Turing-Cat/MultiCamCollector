@@ -13,7 +13,7 @@ def _add_to_path(path):
 
 def load_system_sdks():
     """
-    Configures the environment to use system-installed ZED and RealSense SDKs.
+    Configures the environment to use system-installed RealSense SDK.
     
     This function relies on the SDKs being installed in their default locations
     or having their paths correctly set in the system's environment variables.
@@ -21,20 +21,13 @@ def load_system_sdks():
     system = platform.system()
 
     if system == "Windows":
-        # The ZED SDK installer typically adds the 'bin' directory to the system PATH.
-        # If not, this code will add it based on the ZED_SDK_ROOT_DIR environment variable.
-        zed_sdk_root = os.environ.get("ZED_SDK_ROOT_DIR")
-        if zed_sdk_root:
-            _add_to_path(os.path.join(zed_sdk_root, "bin"))
-
         # The RealSense SDK installer adds its directories to the system PATH,
         # so pyrealsense2 can find the required DLLs. No explicit path handling is needed.
+        pass
 
     elif system == "Linux":
-        # On Linux, the ZED SDK installer places libraries in /usr/local/zed/lib.
         # The pyrealsense2 package installed via pip typically handles its own paths.
-        # This is a fallback for cases where the loader needs a hint.
-        _add_to_path("/usr/local/zed/lib")
+        pass
 
     # For RealSense, the 'pyrealsense2' Python wrapper is the primary way to interact
     # with the SDK. It is responsible for finding the underlying 'librealsense2.so'
