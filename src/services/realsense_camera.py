@@ -24,6 +24,45 @@ class RealsenseCamera(AbstractCamera):
         self._is_connected = False
         self._sequence_id = 0
 
+        # Post-processing filters and settings
+        from src.services.config_service import ConfigService
+        config = ConfigService()
+        self._post_processing_enabled = config.get('post_processing.enabled', False)
+        
+        if self._post_processing_enabled:
+            self._depth_to_disparity = rs.disparity_transform(True)
+            self._spatial_filter = rs.spatial_filter()
+            self._spatial_filter.set_option(rs.option.filter_smooth_alpha, 0.5)
+            self._spatial_filter.set_option(rs.option.filter_smooth_delta, 25)
+            self._spatial_filter.set_option(rs.option.filter_magnitude, 2)
+            self._spatial_filter.set_option(rs.option.holes_fill, 0) # Disabled
+            
+            self._temporal_filter = rs.temporal_filter()
+            self._temporal_filter.set_option(rs.option.filter_smooth_alpha, 0.1)
+            self._temporal_filter.set_option(rs.option.filter_smooth_delta, 20)
+            self._temporal_filter.set_option(rs.option.holes_fill, 0) # Using Persistency Index = 0
+            
+            self._disparity_to_depth = rs.disparity_transform(False)
+            self._hole_filling_filter = rs.hole_filling_filter()
+            self._hole_filling_filter.set_option(rs.option.holes_fill, 1) # nearest_from_around
+
+    def _apply_post_processing(self, depth_frame: rs.depth_frame) -> rs.depth_frame:
+        """
+        Applies a recommended chain of post-processing filters to the depth frame
+        to improve its quality for grasping tasks.
+        """
+        # 1. Depth to Disparity
+        frame = self._depth_to_disparity.process(depth_frame)
+        # 2. Spatial Filter
+        frame = self._spatial_filter.process(frame)
+        # 3. Temporal Filter
+        frame = self._temporal_filter.process(frame)
+        # 4. Disparity to Depth
+        frame = self._disparity_to_depth.process(frame)
+        # 5. Hole Filling
+        frame = self._hole_filling_filter.process(frame)
+        return frame
+
     def connect(self) -> None:
         """Initializes and connects to the camera. Must be called from the target worker thread."""
         try:
@@ -90,6 +129,10 @@ class RealsenseCamera(AbstractCamera):
 
             if not color_frame or not depth_frame:
                 return None
+
+            # Apply post-processing if enabled
+            if self._post_processing_enabled:
+                depth_frame = self._apply_post_processing(depth_frame)
 
             # Safely extract RGB image
             rgb_image = None

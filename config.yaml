@@ -3,6 +3,10 @@ camera_settings:
   resolution: "1280x720"
   fps: 30
 
+# Post-Processing Settings
+post_processing:
+  enabled: true             # Enable or disable the entire post-processing pipeline
+
 # UI Performance Settings
 ui:
   display_fps: 15           # Limit UI updates to improve responsiveness

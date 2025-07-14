@@ -53,6 +53,20 @@ class ConfigService:
         """Returns the thread stop timeout in milliseconds."""
         return int(self.ui_settings.get("thread_stop_timeout_ms", 2000))
 
+    def get(self, key: str, default: Any = None) -> Any:
+        """
+        Retrieves a value from the config using dot notation.
+        e.g., get('parent.child.key', 'default_value')
+        """
+        keys = key.split('.')
+        value = self._config
+        try:
+            for k in keys:
+                value = value[k]
+            return value
+        except (KeyError, TypeError):
+            return default
+
     def get_full_config(self) -> Dict[str, Any]:
         """Returns the entire configuration dictionary."""
         return self._config
