@@ -102,10 +102,8 @@ class ZedCamera(AbstractCamera):
                         if depth_data is not None and depth_data.size > 0:
                             # Replace nan and inf with 0 for stable processing
                             np.nan_to_num(depth_data, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
-                            # Convert to millimeters (uint16) to match RealSense
-                            depth_mm = (depth_data * 1000).astype(np.uint16)
-                            # Clip to a practical range (e.g., 0.2m to 10m)
-                            depth_image = np.clip(depth_mm, 200, 10000)
+                            # The data is already in mm (float32), so we just cast to uint16 and clip.
+                            depth_image = np.clip(depth_data, 200, 10000).astype(np.uint16)
                 except Exception as e:
                     print(f"Error retrieving depth image: {e}")
                     depth_image = None
