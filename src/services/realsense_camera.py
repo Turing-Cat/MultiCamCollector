@@ -44,7 +44,7 @@ class RealsenseCamera(AbstractCamera):
             
             self._disparity_to_depth = rs.disparity_transform(False)
             self._hole_filling_filter = rs.hole_filling_filter()
-            self._hole_filling_filter.set_option(rs.option.holes_fill, 1) # nearest_from_around
+            self._hole_filling_filter.set_option(rs.option.holes_fill, 2) # nearest_from_around
 
     def _apply_post_processing(self, depth_frame: rs.depth_frame) -> rs.depth_frame:
         """
