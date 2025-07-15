@@ -60,7 +60,7 @@ class MainWindowController(QObject):
         # View Initialization
         # -----------------------------
         self.view = NewMainWindowView(
-            project_root, self.device_manager, default_storage_path=storage_root
+            project_root, self.device_manager, self.storage_service, default_storage_path=storage_root
         )
         self.capture_orchestrator = CaptureOrchestrator(self.view.preview_grid)
 

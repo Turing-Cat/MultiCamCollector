@@ -9,6 +9,7 @@ import time
 import threading
 from src.services.abstract_camera import AbstractCamera
 from src.services.config_service import ConfigService
+from src.services.storage_service import StorageService
 
 from src.services.camera_factory import CameraFactory
 
@@ -18,10 +19,11 @@ class FrameWorker(QObject):
     frame_ready = pyqtSignal(object)
     connection_status = pyqtSignal(str, bool, str)  # camera_id, is_connected, message
 
-    def __init__(self, camera_config: dict, factory: CameraFactory):
+    def __init__(self, camera_config: dict, factory: CameraFactory, storage_service: StorageService):
         super().__init__()
         self.camera_config = camera_config
         self.factory = factory
+        self.storage_service = storage_service
         self.camera = None  # Will be created in the run method
         self.running = True
         self._lock = threading.Lock()
@@ -42,7 +44,8 @@ class FrameWorker(QObject):
                 camera_id=self.camera_config['camera_id'],
                 camera_type=self.camera_config['type'],
                 device_info=self.camera_config['device_info'],
-                camera_config=self.camera_config['config']
+                camera_config=self.camera_config['config'],
+                storage_service=self.storage_service
             )
             
             print(f"Attempting to connect to {self.camera.camera_id} in worker thread...")
@@ -179,12 +182,29 @@ class PreviewWidget(QWidget):
             image_copy = image if image.flags.c_contiguous else image.copy()
 
             if is_depth:
-                # Use fixed alpha for stable visualization (like the simple example)
-                # Avoid dynamic alpha to prevent flickering
-                depth_uint8 = cv2.convertScaleAbs(image_copy, alpha=0.03)
+                # --- Correct Depth Visualization ---
+                # 1. Define a reasonable depth range for visualization (e.g., 0.1m to 5m)
+                min_depth, max_depth = 0.1, 5.0
+                
+                # 2. Clip the depth image to this range to avoid extreme values
+                clipped_depth = np.clip(image_copy, min_depth, max_depth)
+                
+                # 3. Normalize the clipped depth image to the 0-255 range
+                normalized_depth = cv2.normalize(clipped_depth, None, 0, 255, cv2.NORM_MINMAX)
+                
+                # 4. Convert to an 8-bit unsigned integer array
+                depth_uint8 = normalized_depth.astype(np.uint8)
+                
+                # 5. Apply a colormap for better visualization
                 image_copy = cv2.applyColorMap(depth_uint8, cv2.COLORMAP_JET)
-                # Convert BGR to RGB for Qt display
+                
+                # 6. Convert BGR (from colormap) to RGB for Qt display
                 image_copy = cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB)
+            else:
+                # Ensure RGB image is also in the correct format if it's not already
+                if len(image_copy.shape) == 3 and image_copy.shape[2] == 3:
+                    # Assuming the input from camera is RGB, no conversion needed
+                    pass
 
             label_w, label_h = label.width(), label.height()
             # --- Key Fix: Prevent 0-size dimensions from being passed to cv2.resize() ---
@@ -244,10 +264,11 @@ class PreviewWidget(QWidget):
 class PreviewGrid(QWidget):
     """A grid of preview widgets that uses background threads for updates."""
 
-    def __init__(self, project_root: str, device_manager):
+    def __init__(self, project_root: str, device_manager, storage_service: StorageService):
         super().__init__()
         self.project_root = project_root
         self.device_manager = device_manager
+        self.storage_service = storage_service
         self.previews = {}
         self.workers = {}
         self.threads = []
@@ -281,7 +302,7 @@ class PreviewGrid(QWidget):
         layout.addWidget(preview, row, col, rowspan, colspan)
         
         thread = QThread()
-        worker = FrameWorker(cam_config, self.device_manager.factory)
+        worker = FrameWorker(cam_config, self.device_manager.factory, self.storage_service)
         self.workers[camera_id] = worker
         worker.moveToThread(thread)
         

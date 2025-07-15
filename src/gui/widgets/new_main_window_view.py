@@ -1,12 +1,14 @@
 import os
 from PyQt6 import uic
 from PyQt6.QtWidgets import QMainWindow
+
+from src.services import StorageService
 from src.gui.widgets.preview_widget import PreviewGrid
 from src.gui.widgets.controls_panel import ControlsPanel
 from src.gui.widgets.log_panel import LogPanel
 
 class NewMainWindowView(QMainWindow):
-    def __init__(self, project_root: str, device_manager, default_storage_path):
+    def __init__(self, project_root: str, device_manager, storage_service: StorageService, default_storage_path):
         super().__init__()
         
         ui_file = os.path.join(project_root, "src", "gui", "ui", "new_main_window.ui")
@@ -23,7 +25,7 @@ class NewMainWindowView(QMainWindow):
         # self.showMaximized()
 
         # Create the preview grid
-        self.preview_grid = PreviewGrid(project_root, device_manager)
+        self.preview_grid = PreviewGrid(project_root, device_manager, storage_service)
 
         # Find the placeholder widget from the .ui file and its parent layout
         placeholder_widget = self.camera_grid_container

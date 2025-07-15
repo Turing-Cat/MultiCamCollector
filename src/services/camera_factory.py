@@ -3,6 +3,7 @@ from typing import Dict, Any, Tuple
 from src.services.abstract_camera import AbstractCamera
 from src.services.realsense_camera import RealsenseCamera
 from src.services.mock_camera import MockCamera
+from src.services.storage_service import StorageService
 
 
 class CameraFactory:
@@ -13,7 +14,8 @@ class CameraFactory:
         camera_id: str,
         camera_type: str,
         device_info: Dict[str, Any],
-        camera_config: Dict[str, Any]
+        camera_config: Dict[str, Any],
+        storage_service: StorageService
     ) -> AbstractCamera:
         """
         Creates a camera instance based on the camera type.
@@ -42,7 +44,8 @@ class CameraFactory:
                 camera_id=camera_id,
                 serial_number=device_info['serial_number'],
                 resolution_wh=resolution,
-                fps=fps
+                fps=fps,
+                storage_service=storage_service
             )
         else:
             raise ValueError(f"Unknown camera type: {camera_type}")
