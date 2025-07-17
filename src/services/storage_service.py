@@ -40,24 +40,19 @@ class StorageService:
             base_filename = f"{timestamp_str}_{frame.camera_id}_frame_{frame.frame_number:04d}"
 
             if settings.save_rgb:
-                rgb_filename = f"{base_filename}_RGB.png"
+                rgb_filename = f"{base_filename}_rgb.png"
                 rgb_path = os.path.join(session_dir, rgb_filename)
                 self._save_image_unicode(rgb_path, frame.rgb_image)
 
             if settings.save_depth and frame.depth_image is not None:
-                depth_filename = f"{base_filename}_Depth.tiff"
+                depth_filename = f"{base_filename}_depth.tiff"
                 depth_path = os.path.join(session_dir, depth_filename)
-                
-                # Handle potential NaN/inf values
-                safe_depth = np.nan_to_num(frame.depth_image, nan=0.0, posinf=0.0, neginf=0.0)
-                
-                # If the depth image is float, assume it's in meters and convert to uint16 millimeters
-                if np.issubdtype(safe_depth.dtype, np.floating):
-                    depth_mm = np.clip(safe_depth * 1000, 0, 65535).astype("uint16")
-                else:
-                    depth_mm = safe_depth.astype("uint16")
-                    
-                self._save_image_unicode(depth_path, depth_mm)
+                self._save_depth_image(depth_path, frame.depth_image)
+
+            if settings.save_raw_depth and frame.raw_depth_image is not None:
+                raw_depth_filename = f"{base_filename}_depth_raw.tiff"
+                raw_depth_path = os.path.join(session_dir, raw_depth_filename)
+                self._save_depth_image(raw_depth_path, frame.raw_depth_image)
 
             if settings.save_point_cloud:
                 pc_filename = f"{base_filename}_PC.ply"
@@ -66,6 +61,19 @@ class StorageService:
 
         print(f"Saved data for {len(frames)} frames to {session_dir}")
         return session_dir
+
+    def _save_depth_image(self, path: str, image: np.ndarray):
+        """Helper function to save a depth image, converting from float meters to uint16 millimeters."""
+        # Handle potential NaN/inf values
+        safe_depth = np.nan_to_num(image, nan=0.0, posinf=0.0, neginf=0.0)
+        
+        # If the depth image is float, assume it's in meters and convert to uint16 millimeters
+        if np.issubdtype(safe_depth.dtype, np.floating):
+            depth_mm = np.clip(safe_depth * 1000, 0, 65535).astype("uint16")
+        else:
+            depth_mm = safe_depth.astype("uint16")
+            
+        self._save_image_unicode(path, depth_mm)
 
     def _save_image_unicode(self, path: str, image: np.ndarray):
         """Saves an image to a path that may contain Unicode characters."""

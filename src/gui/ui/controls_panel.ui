@@ -104,6 +104,16 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="save_raw_depth_checkbox">
+        <property name="text">
+         <string>Save Raw Depth</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QCheckBox" name="save_point_cloud_checkbox">
         <property name="text">
          <string>Save Point Clouds</string>

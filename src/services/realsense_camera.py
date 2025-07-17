@@ -165,6 +165,10 @@ class RealsenseCamera(AbstractCamera):
             if not color_frame or not depth_frame:
                 return None
 
+            # Store the raw depth data before any post-processing
+            raw_depth_data = np.asanyarray(depth_frame.get_data())
+            raw_depth_image = raw_depth_data.astype(np.float32) * self._depth_scale
+
             if self._post_processing_enabled:
                 depth_frame = self._apply_post_processing(depth_frame)
 
@@ -180,7 +184,8 @@ class RealsenseCamera(AbstractCamera):
                 frame_number=self._sequence_id,
                 timestamp_ns=timestamp_ns,
                 rgb_image=rgb_image,
-                depth_image=depth_image
+                depth_image=depth_image,
+                raw_depth_image=raw_depth_image
             )
             self._sequence_id += 1
             return frame

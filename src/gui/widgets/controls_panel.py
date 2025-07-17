@@ -67,6 +67,7 @@ class ControlsPanel(QWidget):
         return Settings(
             save_rgb=self.save_rgb_checkbox.isChecked(),
             save_depth=self.save_depth_checkbox.isChecked(),
+            save_raw_depth=self.save_raw_depth_checkbox.isChecked(),
             save_point_cloud=self.save_point_cloud_checkbox.isChecked(),
             lock_metadata=self.lock_checkbox.isChecked(),
             path=self.path_edit.text(),
@@ -76,6 +77,7 @@ class ControlsPanel(QWidget):
         """Sets the UI with the given settings."""
         self.save_rgb_checkbox.setChecked(settings.save_rgb)
         self.save_depth_checkbox.setChecked(settings.save_depth)
+        self.save_raw_depth_checkbox.setChecked(settings.save_raw_depth)
         self.save_point_cloud_checkbox.setChecked(settings.save_point_cloud)
         self.lock_checkbox.setChecked(settings.lock_metadata)
         self.path_edit.setText(settings.path)
