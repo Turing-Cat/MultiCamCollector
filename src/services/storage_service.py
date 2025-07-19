@@ -39,7 +39,7 @@ class StorageService:
             timestamp_str = datetime.now().strftime("%Y%m%dT%H%M%S%f")[:-3]
             base_filename = f"{timestamp_str}_{frame.camera_id}_frame_{frame.frame_number:04d}"
 
-            if settings.save_rgb:
+            if settings.save_rgb and frame.rgb_image is not None:
                 rgb_filename = f"{base_filename}_rgb.png"
                 rgb_path = os.path.join(session_dir, rgb_filename)
                 self._save_image_unicode(rgb_path, frame.rgb_image)

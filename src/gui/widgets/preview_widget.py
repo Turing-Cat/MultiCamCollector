@@ -203,8 +203,8 @@ class PreviewWidget(QWidget):
             else:
                 # Ensure RGB image is also in the correct format if it's not already
                 if len(image_copy.shape) == 3 and image_copy.shape[2] == 3:
-                    # Assuming the input from camera is RGB, no conversion needed
-                    pass
+                    # Convert BGR to RGB for correct display in Qt
+                    image_copy = cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB)
 
             label_w, label_h = label.width(), label.height()
             # --- Key Fix: Prevent 0-size dimensions from being passed to cv2.resize() ---

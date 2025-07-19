@@ -172,7 +172,7 @@ class RealsenseCamera(AbstractCamera):
             if self._post_processing_enabled:
                 depth_frame = self._apply_post_processing(depth_frame)
 
-            rgb_image = np.asanyarray(color_frame.get_data())[:, :, ::-1].copy()
+            rgb_image = np.asanyarray(color_frame.get_data()).copy()
             
             depth_data = np.asanyarray(depth_frame.get_data())
             # Convert raw depth (uint16) to meters (float32)
