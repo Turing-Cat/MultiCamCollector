@@ -128,10 +128,11 @@ class MainWindowController(QObject):
                 f"Saved {len(frames)} frames to: {session_dir}"
             )
 
-            if not self.view.controls_panel.lock_checkbox.isChecked():
-                self.sequence_counter.increment()
-                metadata.sequence_number = self.sequence_counter.get_current()
-                self.view.controls_panel.set_metadata(metadata)
+            # Always increment sequence number after successful capture
+            # lock_metadata only affects saving options, not sequence numbering
+            self.sequence_counter.increment()
+            metadata.sequence_number = self.sequence_counter.get_current()
+            self.view.controls_panel.set_metadata(metadata)
         else:
             self.view.log_panel.add_log_message("Capture failed. No frames received.")
 

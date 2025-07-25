@@ -41,12 +41,23 @@ class ControlsPanel(QWidget):
         self.lighting_combo.currentTextChanged.connect(
             lambda text: self.lighting_level_changed.emit(LightingLevel(text))
         )
+        self.lock_checkbox.stateChanged.connect(self.on_lock_metadata_changed)
 
     def on_browse(self):
         """Open a dialog to select a directory."""
         directory = QFileDialog.getExistingDirectory(self, "Select Storage Directory")
         if directory:
             self.path_edit.setText(directory)
+
+    def on_lock_metadata_changed(self, state):
+        """Handle lock metadata checkbox state changes."""
+        is_locked = self.lock_checkbox.isChecked()
+        
+        # Enable/disable save option checkboxes based on lock state
+        self.save_rgb_checkbox.setEnabled(not is_locked)
+        self.save_depth_checkbox.setEnabled(not is_locked)
+        self.save_raw_depth_checkbox.setEnabled(not is_locked)
+        self.save_point_cloud_checkbox.setEnabled(not is_locked)
 
     def get_metadata(self) -> CaptureMetadata:
         """Returns the current capture metadata from the UI."""
@@ -81,3 +92,6 @@ class ControlsPanel(QWidget):
         self.save_point_cloud_checkbox.setChecked(settings.save_point_cloud)
         self.lock_checkbox.setChecked(settings.lock_metadata)
         self.path_edit.setText(settings.path)
+        
+        # Update the enabled state of save option checkboxes based on lock state
+        self.on_lock_metadata_changed(settings.lock_metadata)
