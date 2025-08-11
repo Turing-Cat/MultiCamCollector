@@ -1,239 +1,141 @@
-# MultiCamCollector
+# MultiCamCollector 使用说明
 
-A professional multi-camera data collection application for synchronized RGB-D capture from Intel RealSense and ZED cameras.
+MultiCamCollector 是一个专业的多摄像头数据采集应用程序，支持从 Intel RealSense 和 ZED 相机同步采集 RGB-D 数据。
 
-## Features
+## 目录
 
-- **Multi-Camera Support**: Simultaneous capture from multiple Intel RealSense D435i and ZED 2i cameras
-- **Synchronized Capture**: Software-based frame synchronization across all connected cameras
-- **Real-time Preview**: Live preview of all camera feeds with automatic layout
-- **Flexible Storage**: Configurable data formats (RGB, Depth, Point Cloud) with organized directory structure
-- **Robust Architecture**: Clean separation of concerns with dependency injection and comprehensive error handling
-- **User-Friendly Interface**: Intuitive Qt-based GUI with real-time logging and status monitoring
+- [系统要求](#系统要求)
+- [安装指南](#安装指南)
+- [配置说明](#配置说明)
+- [运行程序](#运行程序)
+- [使用指南](#使用指南)
+- [数据存储结构](#数据存储结构)
+- [故障排除](#故障排除)
 
-## Architecture
+## 系统要求
 
-The application follows a layered architecture with clear separation of concerns:
+- **操作系统**: Windows 10/11, Linux (推荐 Ubuntu 20.04 或更高版本)
+- **Python**: 3.9 或更高版本
+- **摄像头 SDK**:
+  - Intel RealSense SDK 2.0
+  - ZED SDK 4.2.5 或更高版本
+- **其他依赖**: 请参见 `requirements.txt` 文件
 
-```
-MultiCamCollector/
-├── core/                   # Core application infrastructure
-│   ├── application.py      # Main application lifecycle management
-│   ├── config.py          # Centralized configuration management
-│   ├── container.py       # Dependency injection container
-│   ├── error_handler.py   # Error handling utilities
-│   ├── logging_config.py  # Logging configuration
-│   └── validation.py      # Input validation utilities
-├── gui/                   # User interface components
-│   ├── base/              # Base classes and factories
-│   │   ├── base_widget.py # Base widget class
-│   │   └── widget_factory.py # Widget factory for DI
-│   └── widgets/           # Specific widget implementations
-│       ├── log_panel.py   # Log display widget
-│       ├── metadata_panel.py # Metadata configuration
-│       ├── preview_widget.py # Camera preview widgets
-│       └── settings_panel.py # Settings configuration
-├── main_window/           # Main application window
-│   ├── main_window_controller.py # Main window controller
-│   └── main_window_view.py       # Main window view
-├── services/              # Business logic services
-│   ├── interfaces/        # Service interfaces
-│   ├── capture_orchestrator.py # Frame capture coordination
-│   ├── config_service.py  # Configuration access service
-│   ├── device_manager.py  # Camera device management
-│   ├── exceptions.py      # Custom exception classes
-│   ├── sequence_counter.py # Sequence number management
-│   └── storage_service.py # Data storage service
-├── devices/               # Camera device abstractions
-│   ├── abstract_camera.py # Base camera interface
-│   ├── realsense_camera.py # RealSense implementation
-│   ├── zed_camera.py      # ZED camera implementation
-│   └── mock_camera.py     # Mock camera for testing
-├── models/                # Data models
-│   ├── camera.py          # Camera and frame models
-│   └── metadata.py        # Metadata models
-└── main.py               # Application entry point
-```
+## 安装指南
 
-## Key Design Principles
+### 1. 克隆项目
 
-### 1. Separation of Concerns
-- **GUI Layer**: Pure presentation logic, no business logic
-- **Service Layer**: Business logic and data processing
-- **Device Layer**: Hardware abstraction and device communication
-- **Core Layer**: Application infrastructure and utilities
-
-### 2. Dependency Injection
-- Services are registered in a central container
-- Dependencies are injected rather than hard-coded
-- Improves testability and maintainability
-
-### 3. Interface-Based Design
-- Services implement well-defined interfaces
-- Enables easy mocking and testing
-- Supports future extensibility
-
-### 4. Comprehensive Error Handling
-- Custom exception hierarchy for different error types
-- Centralized error handling with user-friendly messages
-- Robust validation throughout the application
-
-### 5. Configuration Management
-- Centralized configuration with type safety
-- Environment-specific settings support
-- Validation of configuration values
-
-## Installation
-
-### Prerequisites
-
-- Python 3.9 or higher
-- Intel RealSense SDK 2.0
-- ZED SDK 4.2.5 or higher
-- PyQt6
-
-### Setup
-
-1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd MultiCamCollector
 ```
 
-2. Install Python dependencies:
+### 2. 安装 Python 依赖
+
 ```bash
 pip install -r requirements.txt
 ```
 
-3. Install camera SDKs:
-   - **Intel RealSense**: Download and install from [Intel RealSense SDK](https://github.com/IntelRealSense/librealsense)
-   - **ZED SDK**: Download and install from [Stereolabs ZED SDK](https://www.stereolabs.com/developers/release/)
+### 3. 安装摄像头 SDK
 
-4. Configure the application:
-   - Copy `config.yaml.example` to `config.yaml`
-   - Modify settings as needed
+- **Intel RealSense SDK**: 从 [Intel RealSense SDK](https://github.com/IntelRealSense/librealsense) 下载并安装
+- **ZED SDK**: 从 [Stereolabs ZED SDK](https://www.stereolabs.com/developers/release/) 下载并安装
 
-## Usage
+## 配置说明
 
-### Running the Application
+应用程序使用 `config.yaml` 文件进行配置。如果该文件不存在，请复制 `config.yaml.example` 并重命名为 `config.yaml`，然后根据需要修改设置。
 
-```bash
-python main.py
-```
-
-### Configuration
-
-The application uses a YAML configuration file (`config.yaml`) for settings:
+### 主要配置项
 
 ```yaml
-# Camera Settings
-camera_resolution: "1280x720"
-camera_fps: 30
-exposure:
-  d435i: 150
-  zed2i: 100
+# 相机硬件设置
+camera_settings:
+  resolution: "1280x720"  # 支持的分辨率: "640x480", "1280x720", "1920x1080"
+  fps: 30                 # 帧率: 15, 30, 60
 
-# ZED Camera Settings
-zed:
-  enable_self_calibration: false
-  depth_mode: "PERFORMANCE"
-  depth_stabilization: true
-  depth_minimum_distance: 200
+# 后处理设置
+post_processing:
+  enabled: true          # 启用或禁用整个后处理管道
 
-# Storage Settings
-dataset_root_dir: "../the-dataset"
-directory_format: "{date}/{lighting}/{background_id}"
-
-# Logging
-log_level: "INFO"
-log_file: "multicam_collector.log"
+# UI 性能设置
+ui:
+  display_fps: 15        # 限制 UI 更新以提高响应速度
+  frame_timeout_ms: 500  # 帧捕获超时时间（Linux 优化）
 ```
 
-### Data Organization
+## 运行程序
 
-Captured data is organized in a hierarchical structure:
+在项目根目录下执行以下命令启动应用程序：
+
+```bash
+python src/main.py
+```
+
+程序启动后，您将看到一个包含以下组件的图形界面：
+
+1. **相机预览面板**: 显示所有连接相机的实时画面
+2. **日志面板**: 显示应用程序运行日志
+3. **设置面板**: 配置数据采集选项
+4. **控制按钮**: 用于控制采集流程
+
+## 使用指南
+
+### 1. 连接相机
+
+启动程序后，系统会自动检测并连接所有可用的 Intel RealSense 和 ZED 相机。如果未检测到真实相机，程序将使用模拟相机。
+
+### 2. 配置采集设置
+
+在右侧的设置面板中，您可以配置：
+
+- **光照等级**: 选择当前环境的光照条件
+- **背景 ID**: 输入当前背景的标识符
+- **保存选项**: 选择要保存的数据类型（RGB 图像、深度图像、点云）
+
+### 3. 开始采集
+
+1. 确认所有设置无误
+2. 点击 "Capture" 按钮或按空格键开始采集
+3. 采集的数据将自动保存到指定目录
+
+### 4. 查看日志
+
+在底部的日志面板中，您可以实时查看应用程序的状态信息、警告和错误。
+
+## 数据存储结构
+
+采集的数据将按照以下结构组织在 `the-dataset` 目录中：
 
 ```
 the-dataset/
-├── 20250709/              # Date (YYYYMMDD)
-│   ├── normal/            # Lighting condition
-│   │   ├── background_01/ # Background ID
-│   │   │   ├── seq_001/   # Sequence number
+├── YYYYMMDD/              # 日期 (年月日)
+│   ├── lighting_level/    # 光照等级
+│   │   ├── background_id/ # 背景 ID
+│   │   │   ├── seq_001/   # 序列号
 │   │   │   │   ├── metadata.json
-│   │   │   │   ├── 20250709T143022123_RealSense_123456_RGB.png
-│   │   │   │   ├── 20250709T143022123_RealSense_123456_Depth.tiff
+│   │   │   │   ├── YYYYMMDDTHHMMSSmmm_CameraType_SerialNumber_RGB.png
+│   │   │   │   ├── YYYYMMDDTHHMMSSmmm_CameraType_SerialNumber_Depth.tiff
 │   │   │   │   └── ...
 ```
 
-## Development
+## 故障排除
 
-### Code Style
+### 常见问题
 
-The project follows PEP 8 coding standards with additional guidelines:
+1. **未检测到相机**:
+   - 确认相机驱动已正确安装
+   - 检查 USB 连接
+   - 在 Linux 上，可能需要使用管理员权限运行程序
 
-- Use type hints for all function parameters and return values
-- Write comprehensive docstrings for all public methods
-- Use descriptive variable and function names
-- Keep functions focused and single-purpose
+2. **权限错误**:
+   - 确保对数据集目录有写入权限
+   - 检查相机访问权限
 
-### Testing
+3. **性能问题**:
+   - 降低相机分辨率或帧率
+   - 关闭其他使用相机的应用程序
+   - 检查磁盘空间是否充足
 
-Run tests using pytest:
+### 查看日志
 
-```bash
-pytest tests/
-```
-
-### Adding New Camera Types
-
-1. Create a new camera class inheriting from `AbstractCamera`
-2. Implement all required methods
-3. Register the camera type in `DeviceManager`
-4. Add configuration options if needed
-
-### Extending the GUI
-
-1. Create new widgets inheriting from `BaseWidget`
-2. Use the `WidgetFactory` for dependency injection
-3. Follow the MVC pattern for complex widgets
-4. Add proper error handling and validation
-
-## Troubleshooting
-
-### Common Issues
-
-1. **No cameras detected**: 
-   - Verify camera drivers are installed
-   - Check USB connections
-   - Run with administrator privileges if needed
-
-2. **Permission errors**:
-   - Ensure write permissions for the dataset directory
-   - Check camera access permissions
-
-3. **Performance issues**:
-   - Reduce camera resolution or FPS
-   - Close other applications using cameras
-   - Check available disk space
-
-### Logging
-
-The application creates detailed logs in the `logs/` directory. Check the latest log file for error details.
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes following the coding standards
-4. Add tests for new functionality
-5. Submit a pull request
-
-## License
-
-[Add your license information here]
-
-## Acknowledgments
-
-- Intel RealSense team for the excellent SDK
-- Stereolabs for the ZED SDK
-- Qt team for the robust GUI framework
+应用程序会在 `logs/` 目录中创建详细的日志文件。如果遇到问题，请检查最新的日志文件以获取错误详情。
